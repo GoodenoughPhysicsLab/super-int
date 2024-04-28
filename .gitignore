@@ -1,0 +1,14 @@
+/.vs
+/.vscode
+
+/exe
+
+*.obj
+*.pdb
+*.exe
+*.s
+
+*.txt
+*.lnk
+
+*.test.*
