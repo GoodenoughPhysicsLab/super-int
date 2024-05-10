@@ -5,7 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <emmintrin.h> // simd
+
+#ifdef BIGINT_USE_SIMD
+#include <emmintrin.h>
+#endif
 
 typedef struct bigint {
 	//int8_t sign;
@@ -44,10 +47,12 @@ inline bigint* new_bigint_int(intmax_t num)
     return res;
 }
 
+#if 0
 bigint* new_bigint_str(const char *str)
 {
     //
 }
+#endif
 
 void del_bigint(bigint **self)
 {

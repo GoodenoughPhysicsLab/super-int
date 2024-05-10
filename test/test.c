@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "bigint/bigint.h"
+#include "../bigint/bigint.h"
 
 int main(void)
 {

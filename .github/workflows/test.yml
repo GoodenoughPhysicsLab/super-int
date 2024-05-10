@@ -1,0 +1,21 @@
+name: Run tests
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-13, macos-14]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build tests
+      run: |
+        cd test
+        cmake -B build
+        cmake --build build
+
