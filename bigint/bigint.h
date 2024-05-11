@@ -10,42 +10,33 @@
 extern "C" {
 #endif // __cplusplus
 
+typedef struct bigint bigint;
 
-struct bigint;
-#define BIGINT struct bigint
+inline bigint* new_bigint_int(intmax_t);
+bigint* new_bigint_str(const char *);
+void del_bigint(bigint **);
+void print_bigint(bigint *);
 
-inline BIGINT* new_bigint_int(intmax_t);
-BIGINT* new_bigint_str(const char *);
-void del_bigint(BIGINT **);
-void print_bigint(BIGINT *);
+bigint* bigint_add(bigint *, bigint *);
+bigint* bigint_sub(bigint *, bigint *);
+bigint* bigint_mul(bigint *, bigint *);
+bigint* bigint_div(bigint *, bigint *);
 
-BIGINT* bigint_add(BIGINT *, BIGINT *);
-BIGINT* bigint_sub(BIGINT *, BIGINT *);
-BIGINT* bigint_mul(BIGINT *, BIGINT *);
-BIGINT* bigint_div(BIGINT *, BIGINT *);
+bigint* bigint_addNum(bigint *, uintmax_t);
+bigint* bigint_subNum(bigint *, uintmax_t);
+bigint* bigint_mulNum(bigint *, uintmax_t);
+bigint* bigint_divNum(bigint *, uintmax_t);
 
-BIGINT* bigint_addNum(BIGINT *, uintmax_t);
-BIGINT* bigint_subNum(BIGINT *, uintmax_t);
-BIGINT* bigint_mulNum(BIGINT *, uintmax_t);
-BIGINT* bigint_divNum(BIGINT *, uintmax_t);
+bigint* bigint_lshift(bigint *, uintmax_t);
+bigint* bigint_rshift(bigint *, uintmax_t);
 
-BIGINT* bigint_lshift(BIGINT *, uintmax_t);
-BIGINT* bigint_rshift(BIGINT *, uintmax_t);
-
-BIGINT* bigint_not(BIGINT *);
-BIGINT* bigint_or(BIGINT *, BIGINT *);
-BIGINT* bigint_and(BIGINT *, BIGINT *);
-BIGINT* bigint_xor(BIGINT *, BIGINT *);
-
-#undef BIGINT
+bigint* bigint_not(bigint *);
+bigint* bigint_or(bigint *, bigint *);
+bigint* bigint_and(bigint *, bigint *);
+bigint* bigint_xor(bigint *, bigint *);
 
 #include "bigint_src.h"
 
 #ifdef __cplusplus
 }
 #endif // __cpluscplus
-
-#include "define.h"
-#if defined(_MSC_VAR) && !BIGINT_IS_C11
-#pragma warning(pop) // C4003
-#endif

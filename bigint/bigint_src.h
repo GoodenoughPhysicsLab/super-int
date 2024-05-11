@@ -10,24 +10,20 @@
 #include <emmintrin.h>
 #endif
 
-typedef struct bigint {
-	//int8_t sign;
-	intmax_t size; // When negative, size is less than 0
+/*
+ *  .size : When bigint number negative, size is less than 0
+ *  .data : When bigint number is NaN, data is NULL
+ *
+ *  add 1 to size if need
+ */
+
+struct bigint {
+	intmax_t size;
 #ifdef BIGINT_FLOAT
     double decimal;
 #endif
-	uintmax_t data[1];
-} bigint;
-
-inline uintmax_t _abs_intmax_t(intmax_t num)
-{
-    if (num >= 0) {
-        return num;
-    }
-    else {
-        return -num;
-    }
-}
+	uintmax_t* data;
+};
 
 inline bigint* new_bigint_int(intmax_t num)
 {
@@ -36,25 +32,21 @@ inline bigint* new_bigint_int(intmax_t num)
         return NULL;
     }
 
-    if (num < 0) {
-        res->size = -1;
-    } else {
-        res->size = 1;
-    }
+    res->size = num < 0 ? -1 : 1;
 
-    res->data[0] = _abs_intmax_t(num);
+    res->data[0] = abs(num);
 
     return res;
 }
 
-#if 0
 bigint* new_bigint_str(const char *str)
 {
-    //
-}
-#endif
+    bigint *res = (bigint *)malloc(sizeof(bigint));
 
-void del_bigint(bigint **self)
+    return res;
+}
+
+inline void del_bigint(bigint **self)
 {
     assert(self && *self);
 
@@ -62,7 +54,7 @@ void del_bigint(bigint **self)
     *self = NULL;
 }
 
-bigint* _realloc_bigint(bigint **self, size_t size)
+static inline bigint* _realloc_bigint(bigint **self, uintmax_t size)
 {
     assert(self && *self && size >= 1);
 
@@ -73,7 +65,7 @@ bigint* _realloc_bigint(bigint **self, size_t size)
         return NULL;
     }
 
-    if (size > _abs_intmax_t((*self)->size)) {
+    if (size > (uintmax_t)abs((*self)->size)) {
         memset(&(*self)->data[(*self)->size], 0, sizeof(size_t) * (size - (*self)->size));
     }
     (*self)->size = size;
