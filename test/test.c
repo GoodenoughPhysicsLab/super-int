@@ -1,5 +1,9 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdint.h>
+
+#define BIGINT_DATA_TYPE uint32_t
+
 #include "../bigint/bigint.h"
 
 void test_0(void)
@@ -23,17 +27,23 @@ void test_0(void)
 	}
 }
 
+void test_bigint_shrNum(void) 
+{
+	BIGINT_DATA_TYPE data[] = {3, 3};
+	bigint n = {2, data};
+	bigint_shrNum(&n, 1);
+
+	BIGINT_DATA_TYPE tmp = ((BIGINT_DATA_TYPE)1) << (sizeof(BIGINT_DATA_TYPE) * 8 - 1);
+	assert(n.data[0] == (1 | tmp));
+	assert(n.data[1] == 1);
+}
+
 int main(void)
 {
-#ifdef NDEBUG
-    puts("-*- release -*-");
-#else
-    puts("-*- debug -*-");
-#endif
-	puts("-- test_bigint start");
+	puts("-*- test_bigint start -*-");
 
-	test_0();
+	test_bigint_shrNum();
 
-	puts("-- test_bigint end");
+	puts("-*- test_bigint end -*-");
 	return 0;
 }

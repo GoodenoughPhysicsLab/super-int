@@ -22,10 +22,20 @@ struct bigint {
 #ifdef BIGINT_FLOAT
     double decimal;
 #endif
-	uintmax_t* data;
+	BIGINT_DATA_TYPE* data;
 };
 
-inline bigint* new_bigint_int(intmax_t num)
+inline int bigint_is_NaN(bigint *self)
+{
+    return self->data == NULL;
+}
+
+inline bigint* bigint_abs(bigint *self)
+{
+    self->size = self->size < 0? -self->size : self->size;
+}
+
+bigint* new_bigint_int(intmax_t num)
 {
     bigint *res = (bigint *)malloc(sizeof(bigint));
     if (res == NULL) {
@@ -33,8 +43,7 @@ inline bigint* new_bigint_int(intmax_t num)
     }
 
     res->size = num < 0 ? -1 : 1;
-
-    res->data[0] = abs(num);
+    res->data[0] = num < 0 ? -num : num;
 
     return res;
 }
@@ -54,7 +63,7 @@ inline void del_bigint(bigint **self)
     *self = NULL;
 }
 
-static inline bigint* _realloc_bigint(bigint **self, uintmax_t size)
+static inline bigint* _realloc_bigint(bigint **self, BIGINT_DATA_TYPE size)
 {
     assert(self && *self && size >= 1);
 
@@ -65,7 +74,7 @@ static inline bigint* _realloc_bigint(bigint **self, uintmax_t size)
         return NULL;
     }
 
-    if (size > (uintmax_t)abs((*self)->size)) {
+    if (size > (BIGINT_DATA_TYPE)((*self)->size < 0? -(*self)->size : (*self)->size)) {
         memset(&(*self)->data[(*self)->size], 0, sizeof(size_t) * (size - (*self)->size));
     }
     (*self)->size = size;
@@ -89,5 +98,20 @@ bigint* bigint_mul(bigint *self, bigint *other)
 
 bigint* bigint_div(bigint *self, bigint *other)
 {
+    return self;
+}
+
+bigint* bigint_shrNum(bigint *self, BIGINT_DATA_TYPE other)
+{
+    assert(self && other && self->data);
+
+    BIGINT_DATA_TYPE is_odd = 0;
+    for (intmax_t i = self->size - 1; i >= 0; --i) {
+        BIGINT_DATA_TYPE is_odd_temp = self->data[i] & 1;
+        self->data[i] >>= 1;
+        self->data[i] |= is_odd << (sizeof(BIGINT_DATA_TYPE) * 8 - 1);
+        is_odd = is_odd_temp;
+    }
+
     return self;
 }
