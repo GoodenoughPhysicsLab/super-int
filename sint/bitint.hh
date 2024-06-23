@@ -1,3 +1,7 @@
+#ifndef __cpp_constinit
+#   error "do not use c++20"
+#endif
+
 #include <cstdint>
 #include <cassert>
 #include <iostream>
@@ -38,6 +42,10 @@ private:
 public:
     constexpr BitInt() noexcept = default;
 
+    /* Note: BitInt(0xff) will be interpreted as -1 instead of
+     *
+     *       We strongly recommend to use BitInt{0xff} to let compiler throw error
+     */
     constexpr BitInt(const byte value) noexcept {
         assert(value <= max_num);
         this->_value = value;
@@ -52,6 +60,7 @@ public:
     }
 
     constexpr BitInt& operator=(const byte value) noexcept {
+        assert(value <= max_num);
         this->_value = value;
         return *this;
     }
@@ -61,43 +70,51 @@ public:
         return *this;
     }
 
-    constexpr BitInt operator+(const byte value) const noexcept {
-        return BitInt(this->_value + value);
+    constexpr BitInt operator+(const byte value) noexcept {
+        assert(value <= max_num);
+        // bool _value_sign = this->_value < 0;
+        // bool value_sign = value < 0;
+        auto res_v = this->_value + value;
+        return BitInt<N>{res_v};
     }
 
-    constexpr BitInt operator+(const BitInt& other) const noexcept {
-        return BitInt(this->_value + other._value);
+    template<uint8_t U>
+    constexpr BitInt& operator+(BitInt<U>& other) noexcept {
+        this->_value = this->operator+(other._value);
+        return *this;
     }
 
-    constexpr BitInt operator-(const byte value) const noexcept {
+    BitInt& operator+(const BitInt& other) {}
+
+    constexpr BitInt operator-(const byte value) noexcept {
         return BitInt(this->_value - value);
     }
 
-    constexpr BitInt operator-(const BitInt& other) const noexcept {
+    constexpr BitInt operator-(const BitInt& other) noexcept {
         return BitInt(this->_value - other._value);
     }
 
-    constexpr BitInt operator*(const byte value) const noexcept {
+    constexpr BitInt operator*(const byte value) noexcept {
         return BitInt(this->_value * value);
     }
 
-    constexpr BitInt operator*(const BitInt& other) const noexcept {
+    constexpr BitInt operator*(const BitInt& other) noexcept {
         return BitInt(this->_value * other._value);
     }
 
-    constexpr BitInt operator/(const byte value) const noexcept {
+    constexpr BitInt operator/(const byte value) noexcept {
         return BitInt(this->_value / value);
     }
 
-    constexpr BitInt operator/(const BitInt& other) const noexcept {
+    constexpr BitInt operator/(const BitInt& other) noexcept {
         return BitInt(this->_value / other._value);
     }
 
-    constexpr BitInt operator%(const byte value) const noexcept {
+    constexpr BitInt operator%(const byte value) noexcept {
         return BitInt(this->_value % value);
     }
 
-    constexpr BitInt operator%(const BitInt& other) const noexcept {
+    constexpr BitInt operator%(const BitInt& other) noexcept {
         return BitInt(this->_value % other._value);
     }
 
@@ -178,7 +195,7 @@ public:
     }
 
     constexpr bool operator==(const BitInt& other) const noexcept {
-        return this->_value == (other._value & max_num);
+        return this->_value == other._value;
     }
 
     constexpr bool operator!=(const byte value) const noexcept {

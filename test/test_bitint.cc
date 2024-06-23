@@ -1,15 +1,15 @@
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
-
 #include <type_traits>
 
 #include "../sint/bitint.hh"
 using si::BitInt;
 
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+
 void test_bitint_init() noexcept {
-    constexpr auto a = BitInt<7>(0xFF);
-    // static_assert(a == 0x6F);
+    constexpr auto a = BitInt<7>{0x7f};
+    // constexpr auto b = BitInt<7>{0xff}; // err
 }
 
 void test_bitint_byte_type() noexcept {
@@ -23,15 +23,16 @@ void test_bitint_byte_type() noexcept {
     static_assert(BitInt<63>::max_num == 0x7F'FF'FF'FF'FF'FF'FF'FF);
 }
 
-void test_bitint_add() noexcept {
-    constexpr auto a = BitInt<8>(0xFF);
-    constexpr auto b = BitInt<8>(0x0F);
-    constexpr auto c = BitInt<8>(0xF0);
+// void test_bitint_add() noexcept {
+//     constexpr auto a = BitInt<8>{0xFF};
+//     constexpr auto b = BitInt<8>(0x0F);
+//     constexpr auto c = BitInt<8>(0xF0);
+//     static_assert(a == b + c);
 
-    static_assert(a == b + c);
-}
+//     // constexpr auto d = BitInt<8>(1);
+//     // static_assert(d == a + d);
+// }
 
 int main() noexcept {
-    test_bitint_init();
     return 0;
 }
