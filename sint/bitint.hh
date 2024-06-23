@@ -1,190 +1,217 @@
-#include <cstddef>
 #include <cstdint>
+#include <cassert>
 #include <iostream>
 #include <ostream>
 #include <type_traits>
 
+namespace si::detail {
+
+template<typename T>
+constexpr T bitint_max_num(uint8_t n) {
+    T res{};
+
+    for (uint8_t i = 0; i < n; ++i) {
+        res |= (static_cast<intmax_t>(1) << i);
+    }
+    return res;
+}
+
+} // namespace si::detail
+
 namespace si {
 
-template<::std::size_t N = 4>
+template<uint8_t N = 4>
 class BitInt {
-    static_assert(N > 0 && N < 8);
-    using byte = uint8_t;
-    static constexpr int bit_size = N;
-    static constexpr int max_num = (1 << bit_size) - 1;
-    byte value;
 public:
-    template<typename T, typename ::std::enable_if_t<
-        ::std::is_unsigned_v<T> && ::std::is_integral_v<::std::remove_cv_t<::std::remove_reference_t<T>>>>* = nullptr
-    >
-    constexpr BitInt(const T value) noexcept {
-        this->value = value & max_num;
-    }
+    using byte =
+        ::std::conditional_t<0 < N && N < 8, int_least8_t,
+            ::std::conditional_t<N < 16, int_least16_t,
+                ::std::conditional_t<N < 32, int_least32_t, int_least64_t>
+            >
+        >;
+    static constexpr uint8_t bit_size = N;
+    static constexpr byte max_num = detail::bitint_max_num<byte>(N);
 
-    constexpr BitInt(const intmax_t value) noexcept {
-        this->value = abs(value) & max_num;
+private:
+    byte _value{};
+
+public:
+    constexpr BitInt() noexcept = default;
+
+    constexpr BitInt(const byte value) noexcept {
+        assert(value <= max_num);
+        this->_value = value;
     }
 
     constexpr BitInt(const BitInt& other) noexcept {
-        this->value = other.value;
+        this->_value = other._value;
     }
 
     constexpr BitInt(BitInt&& other) noexcept {
-        this->value = other.value;
+        this->_value = other._value;
     }
 
-    constexpr BitInt& operator=(const uintmax_t value) noexcept {
-        this->value = value & max_num;
+    constexpr BitInt& operator=(const byte value) noexcept {
+        this->_value = value;
         return *this;
     }
 
     constexpr BitInt& operator=(const BitInt& other) noexcept {
-        this->value = other.value;
+        this->_value = other._value;
         return *this;
     }
 
     constexpr BitInt operator+(const byte value) const noexcept {
-        return BitInt(this->value + value);
+        return BitInt(this->_value + value);
     }
 
     constexpr BitInt operator+(const BitInt& other) const noexcept {
-        return BitInt(this->value + other.value);
+        return BitInt(this->_value + other._value);
     }
 
     constexpr BitInt operator-(const byte value) const noexcept {
-        return BitInt(this->value - value);
+        return BitInt(this->_value - value);
     }
 
     constexpr BitInt operator-(const BitInt& other) const noexcept {
-        return BitInt(this->value - other.value);
+        return BitInt(this->_value - other._value);
     }
 
     constexpr BitInt operator*(const byte value) const noexcept {
-        return BitInt(this->value * value);
+        return BitInt(this->_value * value);
     }
 
     constexpr BitInt operator*(const BitInt& other) const noexcept {
-        return BitInt(this->value * other.value);
+        return BitInt(this->_value * other._value);
     }
 
     constexpr BitInt operator/(const byte value) const noexcept {
-        return BitInt(this->value / value);
+        return BitInt(this->_value / value);
     }
 
     constexpr BitInt operator/(const BitInt& other) const noexcept {
-        return BitInt(this->value / other.value);
+        return BitInt(this->_value / other._value);
     }
 
     constexpr BitInt operator%(const byte value) const noexcept {
-        return BitInt(this->value % value);
+        return BitInt(this->_value % value);
     }
 
     constexpr BitInt operator%(const BitInt& other) const noexcept {
-        return BitInt(this->value % other.value);
+        return BitInt(this->_value % other._value);
     }
 
     constexpr BitInt& operator+=(const byte value) noexcept {
-        this->value = (this->value + value) & max_num;
+        this->_value = (this->_value + value) & max_num;
         return *this;
     }
 
     constexpr BitInt& operator+=(const BitInt& other) noexcept {
-        this->value = (this->value + other.value) & max_num;
+        this->_value = (this->_value + other._value) & max_num;
         return *this;
     }
 
     constexpr BitInt& operator-=(const byte value) noexcept {
-        this->value = (this->value - value) & max_num;
+        this->_value = (this->_value - value) & max_num;
         return *this;
     }
 
     constexpr BitInt& operator-=(const BitInt& other) noexcept {
-        this->value = (this->value - other.value) & max_num;
+        this->_value = (this->_value - other._value) & max_num;
         return *this;
     }
 
     constexpr BitInt& operator*=(const byte value) noexcept {
-        this->value = (this->value * value) & max_num;
+        this->_value = (this->_value * value) & max_num;
         return *this;
     }
 
     constexpr BitInt& operator*=(const BitInt& other) noexcept {
-        this->value = (this->value * other.value) & max_num;
+        this->_value = (this->_value * other._value) & max_num;
         return *this;
     }
 
     constexpr BitInt& operator/=(const byte value) noexcept {
-        this->value = (this->value / value) & max_num;
+        this->_value = (this->_value / value) & max_num;
         return *this;
     }
 
     constexpr BitInt& operator/=(const BitInt& other) noexcept {
-        this->value = (this->value / other.value) & max_num;
+        this->_value = (this->_value / other._value) & max_num;
         return *this;
     }
 
     constexpr BitInt& operator%=(const byte value) noexcept {
-        this->value = (this->value % value) & max_num;
+        this->_value = (this->_value % value) & max_num;
         return *this;
     }
 
     constexpr BitInt& operator%=(const BitInt& other) noexcept {
-        this->value = (this->value % other.value) & max_num;
+        this->_value = (this->_value % other._value) & max_num;
         return *this;
     }
 
     constexpr BitInt& operator++() noexcept {
-        this->value = (this->value + 1) & max_num;
+        this->_value = (this->_value + 1) & max_num;
         return *this;
     }
 
     constexpr BitInt operator++(int) noexcept {
         BitInt tmp = *this;
-        this->value = (this->value + 1) & max_num;
+        this->_value = (this->_value + 1) & max_num;
         return tmp; // can I move it instead of copy it
     }
 
     constexpr BitInt& operator--() noexcept {
-        this->value = (this->value - 1) & max_num;
+        this->_value = (this->_value - 1) & max_num;
         return *this;
     }
 
     constexpr BitInt operator--(int) noexcept {
         BitInt tmp = *this;
-        this->value = (this->value - 1) & max_num;
+        this->_value = (this->_value - 1) & max_num;
         return tmp;
     }
 
     constexpr bool operator==(const byte value) const noexcept {
-        return this->value == (value & max_num);
+        return this->_value == value;
     }
 
     constexpr bool operator==(const BitInt& other) const noexcept {
-        return this->value == (other.value & max_num);
+        return this->_value == (other._value & max_num);
     }
 
     constexpr bool operator!=(const byte value) const noexcept {
-        return this->value != (value & max_num);
+        return this->_value != (value & max_num);
     }
 
     constexpr bool operator!=(const BitInt& other) const noexcept {
-        return this->value != (other.value & max_num);
+        return this->_value != (other._value & max_num);
     }
 
     constexpr bool operator<(const byte value) const noexcept {
-        return this->value < value;
+        return this->_value < value;
     }
 
     constexpr bool operator<(const BitInt& other) const noexcept {
-        return this->value < (other.value & max_num);
+        return this->_value < (other._value & max_num);
     }
 
     constexpr auto num() const noexcept {
-        return this->value;
+        return this->_value;
     }
 
+    constexpr BitInt& abs() noexcept {
+        if (this->_value < 0) {
+            this->_value = -this->_value;
+        }
+        return *this;
+    }
+
+    //TODO support methods in bitset
+
     friend std::ostream& operator<<(std::ostream& out, const BitInt& a) noexcept {
-        return out << (int)a.value;
+        return out << (int)a._value;
     }
 };
 
