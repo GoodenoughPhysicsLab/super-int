@@ -1,3 +1,4 @@
+#include <cassert>
 #include <type_traits>
 
 #include "../sint/bitint.hh"
@@ -13,26 +14,27 @@ void test_bitint_init() noexcept {
 }
 
 void test_bitint_byte_type() noexcept {
-    static_assert(::std::is_same_v<BitInt<7>::byte, int8_t>);
+    static_assert(::std::is_same_v<BitInt<7>::ubyte, uint8_t>);
     static_assert(BitInt<7>::max_num == 0x7F);
-    static_assert(::std::is_same_v<BitInt<15>::byte, int16_t>);
+    static_assert(::std::is_same_v<BitInt<15>::ubyte, uint16_t>);
     static_assert(BitInt<15>::max_num == 0x7F'FF);
-    static_assert(::std::is_same_v<BitInt<31>::byte, int32_t>);
+    static_assert(::std::is_same_v<BitInt<31>::ubyte, uint32_t>);
     static_assert(BitInt<31>::max_num == 0x7F'FF'FF'FF);
-    static_assert(::std::is_same_v<BitInt<63>::byte, int64_t>);
+    static_assert(::std::is_same_v<BitInt<63>::ubyte, uint64_t>);
     static_assert(BitInt<63>::max_num == 0x7F'FF'FF'FF'FF'FF'FF'FF);
 }
 
-// void test_bitint_add() noexcept {
-//     constexpr auto a = BitInt<8>{0xFF};
-//     constexpr auto b = BitInt<8>(0x0F);
-//     constexpr auto c = BitInt<8>(0xF0);
-//     static_assert(a == b + c);
+void test_bitint_add() noexcept {
+    auto a = BitInt<8>{0xFF};
+    auto b = BitInt<8>(0x0F);
+    auto c = BitInt<8>(0xF0);
+    assert(a == b + 0xF0);
+    assert(a == b + c);
 
-//     // constexpr auto d = BitInt<8>(1);
-//     // static_assert(d == a + d);
-// }
+    assert(a + 2 + (1 << 8) == 1);
+}
 
 int main() noexcept {
+    test_bitint_add();
     return 0;
 }
