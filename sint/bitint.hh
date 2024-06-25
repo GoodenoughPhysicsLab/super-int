@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdint>
 #include <cassert>
 #include <iostream>
@@ -63,24 +64,24 @@ public:
         this->_value = other._value;
     }
 
-    constexpr BitInt& operator=(const byte value) noexcept {
+    constexpr BitInt operator=(const intmax_t value) const noexcept {
         assert(value <= max_num);
 
-        this->is_neg = value < 0;
-        this->_value = this->_value? -value : value;
-        return *this;
+        BitInt<N> res;
+        res.is_neg = value < 0;
+        res._value = static_cast<ubyte>((res._value? -value : value) & max_num);
+        return res;
     }
 
-    constexpr BitInt& operator=(const BitInt& other) noexcept {
-        this->_value = other._value;
-        return *this;
+    constexpr BitInt operator=(const BitInt& other) const noexcept {
+        return BitInt<N>{other};
     }
 
-    constexpr BitInt operator+(const uintmax_t value) noexcept {
+    constexpr BitInt operator+(const uintmax_t value) const noexcept {
         ubyte _value = static_cast<ubyte>(value & max_num);
 
+        BitInt<N> res;
         if (this->is_neg) {
-            BitInt<N> res;
             if (_value - this->_value < 0) {
                 res._value = (this->_value - _value) & max_num;
                 res.is_neg = true;
@@ -88,13 +89,19 @@ public:
             }
             res._value = (_value - this->_value) & max_num;
             return res;
+        } else {
+            res._value = (_value + this->_value) & max_num;
         }
 
-        return BitInt<N>((_value + this->_value) & max_num);
+        return res;
     }
 
-    constexpr BitInt operator+(const BitInt& other) noexcept {
+    constexpr BitInt operator+(const BitInt& other) const noexcept {
         return *this + static_cast<ubyte>(other._value & max_num);
+    }
+
+    friend constexpr BitInt operator+(const uintmax_t value, const BitInt& other) noexcept {
+        return other + value;
     }
 
     constexpr BitInt operator-(const ubyte value) noexcept {
@@ -206,7 +213,7 @@ public:
     }
 
     constexpr bool operator==(const BitInt& other) const noexcept {
-        return this->_value == other._value;
+        return this->_value == other._value && this->is_neg == other.is_neg;
     }
 
     constexpr bool operator!=(const ubyte value) const noexcept {

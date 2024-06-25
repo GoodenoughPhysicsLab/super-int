@@ -25,16 +25,18 @@ void test_bitint_byte_type() noexcept {
 }
 
 void test_bitint_add() noexcept {
-    auto a = BitInt<8>{0xFF};
-    auto b = BitInt<8>(0x0F);
-    auto c = BitInt<8>(0xF0);
-    assert(a == b + 0xF0);
-    assert(a == b + c);
+    constexpr auto a = BitInt<8>{0xFF};
+    // a = 1;
+    constexpr auto b = BitInt<8>(0x0F);
+    constexpr auto c = BitInt<8>(0xF0);
+    static_assert(a == 0xF0 + b);
+    static_assert(a == b + c);
 
-    assert(a + 2 + (1 << 8) == 1);
+    c = 1;
+
+    static_assert(a + 2 + (1 << 8) == 1);
 }
 
 int main() noexcept {
-    test_bitint_add();
     return 0;
 }
