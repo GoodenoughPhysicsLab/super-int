@@ -1,5 +1,4 @@
 #include <cassert>
-#include <iostream>
 #include <type_traits>
 
 #include "../sint/bitint.hh"
@@ -66,7 +65,7 @@ void test_eq() noexcept {
 
 void test_invert() noexcept {
     constexpr auto a = BitInt<8>{};
-    // static_assert(~a == -1);
+    static_assert(~a == -1);
 }
 
 int main() noexcept {

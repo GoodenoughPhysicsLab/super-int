@@ -220,10 +220,14 @@ public:
         return tmp;
     }
 
+    /*
+     * because BitInt NEVER use complement code
+     * therefore, res equals to origin code of inverting code
+     */
     constexpr BitInt operator~() const noexcept {
         BitInt<N> res;
         res.is_neg = !this->is_neg;
-        res._value = ~this->_value;
+        res._value = (this->_value + 1) & max_num;
 
         return res;
     }
