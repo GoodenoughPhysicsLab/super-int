@@ -1,4 +1,3 @@
-#include <cmath>
 #include <cstdint>
 #include <cassert>
 #include <iostream>
@@ -44,7 +43,7 @@ public:
 
 private:
     bool is_neg{false};
-    ubyte _value{};
+    ubyte _value{}; // Whether negative or not, _value is the original code
 
 public:
     constexpr BitInt() noexcept = default;
@@ -53,28 +52,33 @@ public:
      *
      *       We strongly recommend to use BitInt{0xff} to let compiler throw error
      */
-    constexpr BitInt(const byte value) noexcept {
-        assert(value <= max_num);
+    constexpr BitInt(const intmax_t value) noexcept {
+        if constexpr (check) {
+            assert(value <= max_num);
 
-        this->is_neg = value < 0;
-        this->_value = this->_value? -value : value;
+            this->is_neg = value < 0;
+            this->_value = static_cast<ubyte>((value < 0? -value : value) & max_num);
+        } else {
+            //
+        }
     }
 
     constexpr BitInt(const BitInt& other) noexcept {
         this->_value = other._value;
     }
 
-    constexpr BitInt operator=(const intmax_t value) const noexcept {
+    BitInt& operator=(const intmax_t value) noexcept {
         assert(value <= max_num);
 
-        BitInt<N> res;
-        res.is_neg = value < 0;
-        res._value = static_cast<ubyte>((res._value? -value : value) & max_num);
-        return res;
+        this->is_neg = value < 0;
+        this->_value = static_cast<ubyte>((this->is_neg? -value : value) & max_num);
+        return *this;
     }
 
-    constexpr BitInt operator=(const BitInt& other) const noexcept {
-        return BitInt<N>{other};
+    constexpr BitInt& operator=(const BitInt& other) noexcept {
+        this->is_neg = other.is_neg;
+        this->_value = other._value;
+        return *this;
     }
 
     constexpr BitInt operator+(const uintmax_t value) const noexcept {
@@ -88,7 +92,6 @@ public:
                 return res;
             }
             res._value = (_value - this->_value) & max_num;
-            return res;
         } else {
             res._value = (_value + this->_value) & max_num;
         }
@@ -100,12 +103,23 @@ public:
         return *this + static_cast<ubyte>(other._value & max_num);
     }
 
-    friend constexpr BitInt operator+(const uintmax_t value, const BitInt& other) noexcept {
-        return other + value;
-    }
+    constexpr BitInt operator-(const uintmax_t value) const noexcept {
+        ubyte _value = static_cast<ubyte>(value & max_num);
+        BitInt<N> res;
 
-    constexpr BitInt operator-(const ubyte value) noexcept {
-        return BitInt(this->_value - value);
+        if (this->is_neg) {
+            res.is_neg = true;
+            res._value = (this->_value + _value) & max_num;
+        } else {
+            res.is_neg = this->_value - _value < 0;
+            if (res.is_neg) {
+                res._value = (_value - this->_value) & max_num;
+            } else {
+                res._value = (this->_value - _value) & max_num;
+            }
+       }
+
+        return res;
     }
 
     constexpr BitInt operator-(const BitInt& other) noexcept {
@@ -208,8 +222,20 @@ public:
         return tmp;
     }
 
-    constexpr bool operator==(const ubyte value) const noexcept {
-        return this->_value == value;
+    constexpr BitInt operator~() const noexcept {
+        BitInt<N> res;
+        res.is_neg = !this->is_neg;
+        res._value = ~this->_value;
+
+        return res;
+    }
+
+    constexpr bool operator==(const intmax_t value) const noexcept {
+        if (!this->is_neg && value >= 0 || this->is_neg && value < 0) {
+            ubyte _value = static_cast<ubyte>((value < 0? -value : value) & max_num);
+            return this->_value == _value;
+        }
+        return false;
     }
 
     constexpr bool operator==(const BitInt& other) const noexcept {
@@ -232,22 +258,38 @@ public:
         return this->_value < (other._value & max_num);
     }
 
+    constexpr bool is_negtive() const noexcept {
+        return this->is_neg;
+    }
+
     constexpr auto num() const noexcept {
         return this->_value;
     }
 
-    constexpr BitInt& abs() noexcept {
+    constexpr BitInt abs() const noexcept {
         if (this->_value < 0) {
-            this->_value = -this->_value;
+            return BitInt<N>{-this->_value};
         }
         return *this;
     }
 
+    constexpr BitInt complement() const noexcept {
+        return BitInt<N>{(~this->_value + 1) & max_num};
+    }
+
     //TODO support methods in bitset
 
-    friend std::ostream& operator<<(std::ostream& out, const BitInt& a) noexcept {
-        return out << (int)a._value;
+    friend std::ostream& operator<<(std::ostream& out, const BitInt& other) noexcept {
+        if (other.is_neg) {
+            return out << "-" << (intmax_t)other._value;
+        }
+        return out << (intmax_t)other._value;
     }
 };
+
+template<uint8_t N>
+constexpr BitInt<N> operator+(const uintmax_t value, const BitInt<N>& other) noexcept {
+    return other + value;
+}
 
 } // namespace si
