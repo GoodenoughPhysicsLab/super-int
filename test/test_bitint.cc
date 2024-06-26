@@ -1,4 +1,5 @@
 #include <cassert>
+#include <iostream>
 #include <type_traits>
 
 #include "../sint/bitint.hh"
@@ -10,7 +11,9 @@ using si::BitInt;
 
 void test_compile_init() noexcept {
     constexpr auto a = BitInt<7>{0x7f};
-    // constexpr auto b = BitInt<7>{0xff}; // err
+    constexpr auto b = BitInt<7>{0xff};
+
+    static_assert(a == b);
 }
 
 void test_compile_byte_type() noexcept {
@@ -28,10 +31,29 @@ void test_compile_add() noexcept {
     constexpr auto a = BitInt<8>{0xFF};
     constexpr auto b = BitInt<8>(0x0F);
     constexpr auto c = BitInt<8>(0xF0);
+    constexpr auto nc = BitInt<8>(-0xF0);
     static_assert(a == 0xF0 + b);
     static_assert(a == b + c);
-
     static_assert(a + 2 + (1 << 8) == 1);
+
+    constexpr auto d = BitInt<8>(-2);
+    static_assert(d + 3 == 1);
+    static_assert(d + 1 == -1);
+    static_assert(a + nc == b);
+}
+
+void test_compile_sub() noexcept {
+    constexpr auto a = BitInt<8>{0xFF};
+    static_assert(-a == -0xFF);
+
+    constexpr auto b = BitInt<8>(0x0F);
+    constexpr auto c = BitInt<8>(0xF0);
+    static_assert(b == a - 0xF0);
+    static_assert(b == 0xFF - c);
+    static_assert(b == a - c);
+
+    constexpr auto d = BitInt<8>(2);
+    static_assert(d - 1 - (1 << 8) == 1);
 }
 
 void test_eq() noexcept {

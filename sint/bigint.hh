@@ -19,7 +19,7 @@ class BigInt {
     /*
      * if BigInt is negative
      *   ==> size < 0
-     * 
+     *
      * if BigInt is NaN
      *   ==> data == nullptr
      */

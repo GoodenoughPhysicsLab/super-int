@@ -25,7 +25,7 @@ namespace si {
  * @tparam N: bit size
  * @tparam check: checking ubyte value is overflow or not
  */
-template<uint8_t N = 4, bool check = true>
+template<uint8_t N = 4>
 class BitInt {
 public:
     using ubyte =
@@ -48,22 +48,13 @@ private:
 public:
     constexpr BitInt() noexcept = default;
 
-    /* Note: BitInt(0xff) will be interpreted as -1 instead of error
-     *
-     *       We strongly recommend to use BitInt{0xff} to let compiler throw error
-     */
     constexpr BitInt(const intmax_t value) noexcept {
-        if constexpr (check) {
-            assert(value <= max_num);
-
-            this->is_neg = value < 0;
-            this->_value = static_cast<ubyte>((value < 0? -value : value) & max_num);
-        } else {
-            //
-        }
+        this->_value = static_cast<ubyte>((value < 0? -value : value) & max_num);
+        this->is_neg = value < 0;
     }
 
     constexpr BitInt(const BitInt& other) noexcept {
+        this->is_neg = other.is_neg;
         this->_value = other._value;
     }
 
@@ -87,7 +78,7 @@ public:
         BitInt<N> res;
         if (this->is_neg) {
             if (_value - this->_value < 0) {
-                res._value = (this->_value - _value) & max_num;
+                res._value = this->_value - _value;
                 res.is_neg = true;
                 return res;
             }
@@ -100,7 +91,14 @@ public:
     }
 
     constexpr BitInt operator+(const BitInt& other) const noexcept {
+        if (other.is_neg) {
+            return *this - other;
+        }
         return *this + static_cast<ubyte>(other._value & max_num);
+    }
+
+    constexpr BitInt operator-() const noexcept {
+        return BitInt<N>{-this->_value};
     }
 
     constexpr BitInt operator-(const uintmax_t value) const noexcept {
@@ -122,8 +120,8 @@ public:
         return res;
     }
 
-    constexpr BitInt operator-(const BitInt& other) noexcept {
-        return BitInt(this->_value - other._value);
+    constexpr BitInt operator-(const BitInt& other) const noexcept {
+        return *this - static_cast<ubyte>(other._value & max_num);
     }
 
     constexpr BitInt operator*(const ubyte value) noexcept {
@@ -290,6 +288,11 @@ public:
 template<uint8_t N>
 constexpr BitInt<N> operator+(const uintmax_t value, const BitInt<N>& other) noexcept {
     return other + value;
+}
+
+template<uint8_t N>
+constexpr BitInt<N> operator-(const uintmax_t value, const BitInt<N>& other) noexcept {
+    return -other + value;
 }
 
 } // namespace si
