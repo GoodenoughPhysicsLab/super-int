@@ -25,7 +25,7 @@ namespace si {
  * @tparam N: bit size
  * @tparam check: checking ubyte value is overflow or not
  */
-template<uint8_t N = 4>
+template<uint8_t N>
 class BitInt {
 public:
     using ubyte =
@@ -95,6 +95,16 @@ public:
             return *this - other;
         }
         return *this + static_cast<ubyte>(other._value & max_num);
+    }
+
+    constexpr BitInt operator++() const noexcept {
+        return BitInt{(this->_value + 1) & max_num};
+    }
+
+    BitInt operator++(int) noexcept {
+        BitInt tmp{*this};
+        this->_value = (this->_value + 1) & max_num;
+        return tmp;
     }
 
     constexpr BitInt operator-() const noexcept {
@@ -196,17 +206,6 @@ public:
     constexpr BitInt& operator%=(const BitInt& other) noexcept {
         this->_value = (this->_value % other._value) & max_num;
         return *this;
-    }
-
-    constexpr BitInt& operator++() noexcept {
-        this->_value = (this->_value + 1) & max_num;
-        return *this;
-    }
-
-    constexpr BitInt operator++(int) noexcept {
-        BitInt tmp = *this;
-        this->_value = (this->_value + 1) & max_num;
-        return tmp; // can I move it instead of copy it
     }
 
     constexpr BitInt& operator--() noexcept {

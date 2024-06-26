@@ -55,7 +55,7 @@ void test_compile_sub() noexcept {
     static_assert(d - 1 - (1 << 8) == 1);
 }
 
-void test_eq() noexcept {
+void test_compile_eq() noexcept {
     constexpr auto a = BitInt<8>{-0xFF};
     static_assert(a == -0xFF);
 
@@ -63,9 +63,14 @@ void test_eq() noexcept {
     static_assert(a == b);
 }
 
-void test_invert() noexcept {
+void test_compile_invert() noexcept {
     constexpr auto a = BitInt<8>{};
     static_assert(~a == -1);
+}
+
+void test_compile_plusplus() noexcept {
+    constexpr auto a = BitInt<8>{};
+    static_assert(++a == 1);
 }
 
 int main() noexcept {
