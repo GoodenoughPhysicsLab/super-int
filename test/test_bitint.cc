@@ -68,11 +68,14 @@ void test_compile_invert() noexcept {
     static_assert(~a == -1);
 }
 
-void test_compile_plusplus() noexcept {
-    constexpr auto a = BitInt<8>{};
-    static_assert(++a == 1);
+void test_runtime_plusplus() noexcept {
+    auto a = BitInt<8>{};
+    assert(a++ == 0);
+    assert(a == 1);
+    assert(++a == 2);
 }
 
 int main() noexcept {
+    test_runtime_plusplus();
     return 0;
 }

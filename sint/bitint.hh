@@ -66,7 +66,7 @@ public:
         return *this;
     }
 
-    constexpr BitInt& operator=(const BitInt& other) noexcept {
+    BitInt& operator=(const BitInt& other) noexcept {
         this->is_neg = other.is_neg;
         this->_value = other._value;
         return *this;
@@ -97,8 +97,9 @@ public:
         return *this + static_cast<ubyte>(other._value & max_num);
     }
 
-    constexpr BitInt operator++() const noexcept {
-        return BitInt{(this->_value + 1) & max_num};
+    BitInt& operator++() noexcept {
+        this->_value = (this->_value + 1) & max_num;
+        return *this;
     }
 
     BitInt operator++(int) noexcept {

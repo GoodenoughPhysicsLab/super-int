@@ -1,4 +1,4 @@
-name: Run tests
+name: Test
 
 on: [push, pull_request]
 
@@ -15,7 +15,15 @@ jobs:
 
     - name: Build tests
       run: |
-        cd test
-        cmake -B build
+        cmake test/CMakeLists.txt  -B build
         cmake --build build
 
+    - name: Run tests
+      if: matrix.os == 'windows-latest'
+      run: |
+        .\build\Debug\test.exe
+
+    - name: Run tests
+      if: matrix.os != 'windows-latest'
+      run: |
+        ./build/test
