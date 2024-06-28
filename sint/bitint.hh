@@ -4,53 +4,90 @@
 #include <ostream>
 #include <type_traits>
 
-namespace si::detail {
-
-template<typename T>
-constexpr T bitint_max_num(uint8_t n) {
-    T res{};
-
-    for (uint8_t i = 0; i < n; ++i) {
-        res |= (static_cast<intmax_t>(1) << i);
-    }
-    return res;
-}
-
-} // namespace si::detail
-
 namespace si {
 
 /*
  * @brief BitInt
- * @tparam N: bit size
- * @tparam check: checking ubyte value is overflow or not
+ * @tparam N: bit size, don't include sign
+ *
+ * example: BitInt<7> <==> int8_t
  */
 template<uint8_t N>
 class BitInt {
+
+private:
+    template<typename T>
+    static constexpr T bitint_max_num() {
+        T res{};
+
+        for (uint8_t i = 0; i < N; ++i) {
+            res |= (static_cast<T>(1) << i);
+        }
+        return res;
+    }
+
+    template<typename T>
+    static constexpr T bitint_min_num() {
+        T min_num{};
+        if constexpr (N != sizeof(int*) * 8 - 1) {
+            min_num = -(static_cast<T>(1) << N);
+        } else {
+            min_num = std::numeric_limits<T>::min();
+        }
+        return min_num;
+    }
+
 public:
     using ubyte =
         ::std::conditional_t<0 < N && N < 8, uint_least8_t,
             ::std::conditional_t<N < 16, uint_least16_t,
+#if __SIZEOF_POINTER__ == 8 // 64 bit
                 ::std::conditional_t<N < 32, uint_least32_t, uint_least64_t>
+#else // 32 bit
+                uint_least32_t
+#endif
             >
         >;
     using byte = ::std::make_signed_t<ubyte>;
 
     static_assert(N <= sizeof(ubyte) * 8, "N is too large");
 
+#if __SIZEOF_POINTER__ == 8 // 64 bit
+    static_assert(N != 64);
+#else // 32 bit
+    static_assert(N != 32);
+#endif
+
     static constexpr uint8_t bit_size = N;
-    static constexpr ubyte max_num = detail::bitint_max_num<ubyte>(N);
+    static constexpr ubyte max_num = bitint_max_num<ubyte>();
+    static constexpr byte min_num = bitint_min_num<byte>();
 
 private:
     bool is_neg{false};
-    ubyte _value{}; // Whether negative or not, _value is the original code
+    /*
+     * Whether negative or not, _value is the original code
+     *
+     * except "-0", which means the min of BitInt
+     */
+    ubyte _value{};
+
+public:
+    /* return true if self is the min of BitInt */
+    constexpr bool is_min() const noexcept {
+        return this->is_neg && this->_value == 0;
+    }
 
 public:
     constexpr BitInt() noexcept = default;
 
     constexpr BitInt(const intmax_t value) noexcept {
-        this->_value = static_cast<ubyte>((value < 0? -value : value) & max_num);
-        this->is_neg = value < 0;
+        if (value == min_num) {
+            this->is_neg = true;
+            this ->_value = 0;
+        } else {
+            this->is_neg = value < 0;
+            this->_value = static_cast<ubyte>((value < 0? -value : value) & max_num);
+        }
     }
 
     constexpr BitInt(const BitInt& other) noexcept {
@@ -58,11 +95,16 @@ public:
         this->_value = other._value;
     }
 
-    BitInt& operator=(const intmax_t value) noexcept {
-        assert(value <= max_num);
+    // no need to write `BitInt(BitInt&&)`
 
-        this->is_neg = value < 0;
-        this->_value = static_cast<ubyte>((this->is_neg? -value : value) & max_num);
+    BitInt& operator=(const intmax_t value) noexcept {
+        if (value == min_num) {
+            this->is_neg = true;
+            this ->_value = 0;
+        } else {
+            this->is_neg = value < 0;
+            this->_value = static_cast<ubyte>((value < 0? -value : value) & max_num);
+        }
         return *this;
     }
 
@@ -72,6 +114,7 @@ public:
         return *this;
     }
 
+    // TODO support -0(min of BitInt)
     constexpr BitInt operator+(const uintmax_t value) const noexcept {
         ubyte _value = static_cast<ubyte>(value & max_num);
 
@@ -98,13 +141,27 @@ public:
     }
 
     BitInt& operator++() noexcept {
-        this->_value = (this->_value + 1) & max_num;
+        if (!this->is_neg && this->_value == max_num) [[unlikely]] {
+            // -0 means the min of BitInt: -pow(2, N)
+            this->is_neg = true;
+            this->_value = 0;
+        } else if (this->is_min()) [[unlikely]] {
+            this->_value = max_num;
+        } else if (this->is_neg && this->_value == 1) [[unlikely]] {
+            this->is_neg = false;
+            this->_value = 0;
+        } else if (!this->is_neg) [[likely]] {
+            this->_value = (this->_value + 1) & max_num;
+        } else { // this->is_neg
+            this->_value = (this->_value - 1) & max_num;
+        }
+
         return *this;
     }
 
     BitInt operator++(int) noexcept {
         BitInt tmp{*this};
-        this->_value = (this->_value + 1) & max_num;
+        ++(*this);
         return tmp;
     }
 
@@ -134,6 +191,18 @@ public:
     constexpr BitInt operator-(const BitInt& other) const noexcept {
         return *this - static_cast<ubyte>(other._value & max_num);
     }
+
+    BitInt& operator--() noexcept {
+        this->_value = (this->_value - 1) & max_num;
+        return *this;
+    }
+
+    BitInt operator--(int) noexcept {
+        BitInt tmp = *this;
+        this->_value = (this->_value - 1) & max_num;
+        return tmp;
+    }
+
 
     constexpr BitInt operator*(const ubyte value) noexcept {
         return BitInt(this->_value * value);
@@ -209,17 +278,6 @@ public:
         return *this;
     }
 
-    constexpr BitInt& operator--() noexcept {
-        this->_value = (this->_value - 1) & max_num;
-        return *this;
-    }
-
-    constexpr BitInt operator--(int) noexcept {
-        BitInt tmp = *this;
-        this->_value = (this->_value - 1) & max_num;
-        return tmp;
-    }
-
     /*
      * because BitInt NEVER use complement code
      * therefore, res equals to origin code of inverting code
@@ -233,8 +291,11 @@ public:
     }
 
     constexpr bool operator==(const intmax_t value) const noexcept {
+        if (this->is_min()) {
+            return value == min_num;
+        }
         if (!this->is_neg && value >= 0 || this->is_neg && value < 0) {
-            ubyte _value = static_cast<ubyte>((value < 0? -value : value) & max_num);
+            ubyte _value = static_cast<ubyte>((value < 0? -value : value) & max_num);;
             return this->_value == _value;
         }
         return false;
@@ -282,10 +343,13 @@ public:
     //TODO support methods in bitset
 
     friend std::ostream& operator<<(std::ostream& out, const BitInt& other) noexcept {
-        if (other.is_neg) {
-            return out << "-" << (intmax_t)other._value;
+        if (other.is_min()) {
+            return out << static_cast<intmax_t>(min_num);
         }
-        return out << (intmax_t)other._value;
+        if (other.is_neg) {
+            return out << "-" << static_cast<intmax_t>(other._value);
+        }
+        return out << static_cast<intmax_t>(other._value);
     }
 };
 
@@ -298,5 +362,24 @@ template<uint8_t N>
 constexpr BitInt<N> operator-(const uintmax_t value, const BitInt<N>& other) noexcept {
     return -other + value;
 }
+
+
+/* unsigned BitInt */
+template<uint8_t N>
+class uBitInt {
+public:
+    using ubyte = typename BitInt<N>::ubyte;
+    static constexpr ubyte max_num = BitInt<N>::max_num;
+
+private:
+    ubyte _value{};
+
+public:
+    constexpr uBitInt() noexcept = default;
+
+    constexpr uBitInt(const uintmax_t value) noexcept {
+        this->_value = value ;
+    }
+};
 
 } // namespace si

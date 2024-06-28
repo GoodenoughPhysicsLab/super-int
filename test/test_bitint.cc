@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstdint>
 #include <type_traits>
 
 #include "../sint/bitint.hh"
@@ -18,6 +19,7 @@ void test_compile_init() noexcept {
 void test_compile_byte_type() noexcept {
     static_assert(::std::is_same_v<BitInt<7>::ubyte, uint8_t>);
     static_assert(BitInt<7>::max_num == 0x7F);
+    static_assert(::std::is_same_v<BitInt<8>::ubyte, uint16_t>);
     static_assert(::std::is_same_v<BitInt<15>::ubyte, uint16_t>);
     static_assert(BitInt<15>::max_num == 0x7F'FF);
     static_assert(::std::is_same_v<BitInt<31>::ubyte, uint32_t>);
@@ -61,6 +63,10 @@ void test_compile_eq() noexcept {
 
     constexpr auto b = BitInt<8>(-0xFF);
     static_assert(a == b);
+
+    static_assert(BitInt<4>{-16} == -16);
+    static_assert(BitInt<7>{-128} == -128);
+    static_assert(BitInt<8>{-256} == -256);
 }
 
 void test_compile_invert() noexcept {
@@ -68,11 +74,24 @@ void test_compile_invert() noexcept {
     static_assert(~a == -1);
 }
 
+void test_compile_min() {
+    static_assert(BitInt<4>::min_num == -16);
+    static_assert(BitInt<7>::min_num == -128);
+    static_assert(BitInt<8>::min_num == -256);
+    static_assert(BitInt<63>::min_num == static_cast<intmax_t>(1) << 63);
+}
+
 void test_runtime_plusplus() noexcept {
-    auto a = BitInt<8>{};
+    auto a = BitInt<8>{-1};
+    assert(++a == 0);
     assert(a++ == 0);
     assert(a == 1);
-    assert(++a == 2);
+
+    auto b = BitInt<7>{1};
+    int8_t c = 1;
+    do {
+        assert(b++ == c);
+    } while (++c != 1);
 }
 
 int main() noexcept {
