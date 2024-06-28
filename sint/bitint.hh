@@ -42,7 +42,7 @@ public:
     using ubyte =
         ::std::conditional_t<0 < N && N < 8, uint_least8_t,
             ::std::conditional_t<N < 16, uint_least16_t,
-#if __SIZEOF_POINTER__ == 8 // 64 bit
+#ifdef INT64_MAX // 64 bit
                 ::std::conditional_t<N < 32, uint_least32_t, uint_least64_t>
 #else // 32 bit
                 uint_least32_t
@@ -53,7 +53,7 @@ public:
 
     static_assert(N <= sizeof(ubyte) * 8, "N is too large");
 
-#if __SIZEOF_POINTER__ == 8 // 64 bit
+#ifdef INT64_MAX // 64 bit
     static_assert(N != 64);
 #else // 32 bit
     static_assert(N != 32);
