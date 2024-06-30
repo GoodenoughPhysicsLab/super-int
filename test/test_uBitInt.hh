@@ -6,7 +6,7 @@ namespace test_uBitInt {
 
 using si::uBitInt;
 
-void test_compile_init() noexcept {
+inline void compile_init() noexcept {
     constexpr auto a = uBitInt<8>{};
     static_assert(a == 0);
 }

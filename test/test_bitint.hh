@@ -14,7 +14,7 @@ namespace test_BitInt {
 
 using si::BitInt;
 
-void test_compile_init() noexcept {
+inline void compile_init() noexcept {
     constexpr auto a = BitInt<7>{0x7f};
     constexpr auto b = BitInt<7>{0xff};
     // constexpr auto c = BitInt<64>{}; // err
@@ -25,7 +25,7 @@ void test_compile_init() noexcept {
     static_assert(d == 31);
 }
 
-void test_compile_byte_type() noexcept {
+inline void compile_byte_type() noexcept {
     static_assert(::std::is_same_v<BitInt<7>::ubyte, uint8_t>);
     static_assert(BitInt<7>::max_num == 0x7F);
     static_assert(::std::is_same_v<BitInt<8>::ubyte, uint16_t>);
@@ -37,7 +37,7 @@ void test_compile_byte_type() noexcept {
     static_assert(BitInt<63>::max_num == 0x7F'FF'FF'FF'FF'FF'FF'FF);
 }
 
-void test_compile_add() noexcept {
+inline void compile_add() noexcept {
     constexpr auto a = BitInt<8>{0xFF};
     constexpr auto b = BitInt<8>(0x0F);
     constexpr auto c = BitInt<8>(0xF0);
@@ -52,7 +52,7 @@ void test_compile_add() noexcept {
     static_assert(a + nc == b);
 }
 
-void test_compile_sub() noexcept {
+inline void compile_sub() noexcept {
     constexpr auto a = BitInt<8>{0xFF};
     static_assert(-a == -0xFF);
 
@@ -66,7 +66,7 @@ void test_compile_sub() noexcept {
     static_assert(d - 1 - (1 << 8) == 1);
 }
 
-void test_compile_eq() noexcept {
+inline void compile_eq() noexcept {
     constexpr auto a = BitInt<8>{-0xFF};
     static_assert(a == -0xFF);
 
@@ -78,19 +78,19 @@ void test_compile_eq() noexcept {
     static_assert(BitInt<8>{-256} == -256);
 }
 
-void test_compile_invert() noexcept {
+inline void compile_invert() noexcept {
     constexpr auto a = BitInt<8>{};
     static_assert(~a == -1);
 }
 
-void test_compile_min() {
+inline void compile_min() {
     static_assert(BitInt<4>::min_num == -16);
     static_assert(BitInt<7>::min_num == -128);
     static_assert(BitInt<8>::min_num == -256);
     static_assert(BitInt<63>::min_num == static_cast<intmax_t>(1) << 63);
 }
 
-void runtime_plusplus() noexcept {
+inline void runtime_plusplus() noexcept {
     auto a = BitInt<8>{-1};
     assert(++a == 0);
     assert(a++ == 0);
