@@ -1,3 +1,5 @@
+#pragma once
+
 #include <limits>
 #include <cstdint>
 #include <cassert>

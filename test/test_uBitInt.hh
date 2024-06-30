@@ -1,11 +1,14 @@
+#pragma once
+
 #include "../sint/bitint.hh"
+
+namespace test_uBitInt {
+
 using si::uBitInt;
 
-void test_compile_init() {
+void test_compile_init() noexcept {
     constexpr auto a = uBitInt<8>{};
     static_assert(a == 0);
 }
 
-int main() noexcept {
-    return 0;
-}
+} // namespace test_uBitInt

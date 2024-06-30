@@ -1,13 +1,18 @@
+#pragma once
+
 #include <cassert>
 #include <cstdint>
 #include <type_traits>
 
 #include "../sint/bitint.hh"
-using si::BitInt;
 
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
+
+namespace test_BitInt {
+
+using si::BitInt;
 
 void test_compile_init() noexcept {
     constexpr auto a = BitInt<7>{0x7f};
@@ -85,7 +90,7 @@ void test_compile_min() {
     static_assert(BitInt<63>::min_num == static_cast<intmax_t>(1) << 63);
 }
 
-void test_runtime_plusplus() noexcept {
+void runtime_plusplus() noexcept {
     auto a = BitInt<8>{-1};
     assert(++a == 0);
     assert(a++ == 0);
@@ -98,7 +103,4 @@ void test_runtime_plusplus() noexcept {
     } while (++c != 1);
 }
 
-int main() noexcept {
-    test_runtime_plusplus();
-    return 0;
-}
+} // namespace test_BitInt
