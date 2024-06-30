@@ -3,4 +3,6 @@ project(test)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(${PROJECT_NAME} test_bitint.cc)
+file(GLOB_RECURSE SOURCES *.cc)
+
+add_executable(${PROJECT_NAME} ${SOURCES})

@@ -13,7 +13,7 @@ namespace si {
  *
  * example: BitInt<7> <==> int8_t
  */
-template<uint8_t N>
+template<uint16_t N>
 class BitInt {
 
 private:
@@ -21,7 +21,7 @@ private:
     static constexpr T bitint_max_num() {
         T res{};
 
-        for (uint8_t i = 0; i < N; ++i) {
+        for (uint16_t i = 0; i < N; ++i) {
             res |= (static_cast<T>(1) << i);
         }
         return res;
@@ -51,15 +51,9 @@ public:
         >;
     using byte = ::std::make_signed_t<ubyte>;
 
-    static_assert(N <= sizeof(ubyte) * 8, "N is too large");
+    static_assert(N < sizeof(ubyte) * 8, "N is too large");
 
-#ifdef INT64_MAX // 64 bit
-    static_assert(N != 64);
-#else // 32 bit
-    static_assert(N != 32);
-#endif
-
-    static constexpr uint8_t bit_size = N;
+    static constexpr uint16_t bit_size = N;
     static constexpr ubyte max_num = bitint_max_num<ubyte>();
     static constexpr byte min_num = bitint_min_num<byte>();
 
@@ -91,9 +85,10 @@ public:
         }
     }
 
-    constexpr BitInt(const BitInt& other) noexcept {
-        this->is_neg = other.is_neg;
-        this->_value = other._value;
+    template<uint16_t M>
+    constexpr BitInt(const BitInt<M>& other) noexcept {
+        this->is_neg = other.is_negtive();
+        this->_value = other.num() & max_num;
     }
 
     // no need to write `BitInt(BitInt&&)`
@@ -354,19 +349,19 @@ public:
     }
 };
 
-template<uint8_t N>
+template<uint16_t N>
 constexpr BitInt<N> operator+(const uintmax_t value, const BitInt<N>& other) noexcept {
     return other + value;
 }
 
-template<uint8_t N>
+template<uint16_t N>
 constexpr BitInt<N> operator-(const uintmax_t value, const BitInt<N>& other) noexcept {
     return -other + value;
 }
 
 
 /* unsigned BitInt */
-template<uint8_t N>
+template<uint16_t N>
 class uBitInt {
 public:
     using ubyte = typename BitInt<N>::ubyte;
@@ -379,7 +374,54 @@ public:
     constexpr uBitInt() noexcept = default;
 
     constexpr uBitInt(const uintmax_t value) noexcept {
-        this->_value = value ;
+        this->_value = value & max_num;
+    }
+
+    template<uint16_t M>
+    constexpr uBitInt(const BitInt<M>& other) noexcept {
+        this->_value = other.num() & max_num;
+    }
+
+    uBitInt& operator=(const uintmax_t value) noexcept {
+        this->_value = value & max_num;
+        return *this;
+    }
+
+    template<uint16_t M>
+    uBitInt& operator=(const BitInt<M>& other) noexcept {
+        this->_value = other.num() & max_num;
+        return *this;
+    }
+
+    constexpr uBitInt operator+(const intmax_t value) const noexcept {
+        return uBitInt(static_cast<intmax_t>(value + this->_value));
+    }
+
+    template<uint16_t M>
+    constexpr uBitInt operator+(const BitInt<M>& other) const noexcept {
+        return uBitInt(other.num() + this->_value);
+    }
+
+    constexpr uBitInt operator-(const intmax_t value) const noexcept {
+        return uBitInt(static_cast<intmax_t>(this->_value - value));
+    }
+
+    template<uint16_t M>
+    constexpr uBitInt operator-(const BitInt<M>& other) const noexcept {
+        return uBitInt(this->_value - other.num());
+    }
+
+    constexpr bool operator==(const ubyte value) const noexcept {
+        return this->_value == value;
+    }
+
+    template<uint16_t M>
+    constexpr bool operator==(const BitInt<M>& other) const noexcept {
+        return this->_value == other.num();
+    }
+
+    constexpr auto num() const noexcept {
+        return this->_value;
     }
 };
 

@@ -12,8 +12,12 @@ using si::BitInt;
 void test_compile_init() noexcept {
     constexpr auto a = BitInt<7>{0x7f};
     constexpr auto b = BitInt<7>{0xff};
+    // constexpr auto c = BitInt<64>{}; // err
+
+    constexpr BitInt<5> d{a};
 
     static_assert(a == b);
+    static_assert(d == 31);
 }
 
 void test_compile_byte_type() noexcept {
