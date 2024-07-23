@@ -416,13 +416,84 @@ public:
         return uBitInt(this->_value - other.num());
     }
 
+    constexpr uBitInt operator*(const intmax_t value) const noexcept {
+        return uBitInt(this->_value * value);
+    }
+
+    template<bitsize_type M>
+    constexpr uBitInt operator*(const BitInt<M>& other) const noexcept {
+        return uBitInt(this->_value * other.num());
+    }
+
+    constexpr uBitInt operator/(const intmax_t value) const noexcept {
+        return uBitInt(this->_value / value);
+    }
+
+    template<bitsize_type M>
+    constexpr uBitInt operator/(const BitInt<M>& other) const noexcept {
+        return uBitInt(this->_value / other.num());
+    }
+
+    constexpr uBitInt operator%(const intmax_t value) const noexcept {
+        return uBitInt(this->_value % value);
+    }
+
+    template<bitsize_type M>
+    constexpr uBitInt operator%(const BitInt<M>& other) const noexcept {
+        return uBitInt(this->_value % other.num());
+    }
+
+    constexpr bool operator<(const ubyte value) const noexcept {
+        return this->_value < (value & max_num);
+    }
+
+    template<bitsize_type M>
+    constexpr bool operator<(const BitInt<M>& other) const noexcept {
+        return this->_value < (other.num() & max_num);
+    }
+
     constexpr bool operator==(const ubyte value) const noexcept {
-        return this->_value == value;
+        return this->_value == (value & max_num);
     }
 
     template<bitsize_type M>
     constexpr bool operator==(const BitInt<M>& other) const noexcept {
-        return this->_value == other.num();
+        return this->_value == (other.num() & max_num);
+    }
+
+    constexpr bool operator!=(const ubyte value) const noexcept {
+        return this->_value != (value & max_num);
+    }
+
+    template<bitsize_type M>
+    constexpr bool operator!=(const BitInt<M>& other) const noexcept {
+        return this->_value != (other.num() & max_num);
+    }
+
+    uBitInt& operator++() noexcept {
+        this->_value = (this->_value + 1) & max_num;
+        return *this;
+    }
+
+    uBitInt operator++(int) noexcept {
+        uBitInt tmp = *this;
+        this->_value = (this->_value + 1) & max_num;
+        return tmp;
+    }
+
+    uBitInt& operator--() noexcept {
+        this->_value = (this->_value - 1) & max_num;
+        return *this;
+    }
+
+    uBitInt operator--(int) noexcept {
+        uBitInt tmp = *this;
+        this->_value = (this->_value - 1) & max_num;
+        return tmp;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const uBitInt& other) noexcept {
+        return out << static_cast<uintmax_t>(other._value);
     }
 
     constexpr auto num() const noexcept {
