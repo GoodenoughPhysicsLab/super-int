@@ -30,6 +30,14 @@ struct si_bigint* si_bigint_new_from_num(intmax_t const num) {
     return res;
 }
 
+/* Create a new si_bigint from a string
+ */
+struct si_bigint* si_bigint_new_from_str(char const *str) {
+    assert(str != NULL);
+
+    // TODO
+}
+
 /* Create a new si_bigint from a si_bigint
  */
 struct si_bigint* si_bigint_new_from_si_bigint(struct si_bigint const * num) {
@@ -40,37 +48,47 @@ struct si_bigint* si_bigint_new_from_si_bigint(struct si_bigint const * num) {
     return res;
 }
 
-/* Reverse every bit in a si_bigint
-    @Return: A new si_bigint
+/* Free memory of si_bigint
  */
-struct si_bigint* si_bigint_not(si_bigint const *num) {
+void si_bigint_del(si_bigint *num) {
     assert(num != NULL);
 
-    struct si_bigint *res = si_bigint_new_from_si_bigint(num);
+    free(num);
+}
 
-    if (res->len == 0) { // NaN
-        return res;
-    }
+char const* si_bigint_to_str(si_bigint const *num) {
+    assert(num != NULL);
 
-    for (int i = 0; i < res->len; i++) {
-        res->data[i] = ~res->data[i];
-    }
-    return res;
+    // TODO
+}
+
+/* Return true if a si_bigint is NaN
+ */
+bool si_bigint_is_NaN(si_bigint const *num) {
+    return num->len == 0;
 }
 
 /* Reverse every bit of itself
-    @prama num: The si_bigint number to be reversed
-    Show error code's meaning in `si_bigint.h`
+ *  @prama num: The si_bigint number to be reversed
  */
-int si_bigint_self_not(si_bigint *num) {
+void si_bigint_not(si_bigint *num) {
     assert(num != NULL);
 
-    if (num->len == 0) { // NaN
-        return 0;
+    if (si_bigint_is_NaN(num)) {
+        return;
     }
 
     for (int i = 0; i < num->len; i++) {
         num->data[i] = ~num->data[i];
     }
-    return 0;
+    return;
+}
+
+bool si_bigint_eq_num(si_bigint const *num1, intmax_t const num2) {
+    assert(num1 != NULL);
+
+    if (si_bigint_is_NaN(num1) || num1->len != 1) {
+        return false;
+    }
+    return num1->data[0] == num2;
 }
