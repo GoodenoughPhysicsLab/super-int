@@ -90,5 +90,8 @@ bool si_bigint_eq_num(si_bigint const *num1, intmax_t const num2) {
     if (si_bigint_is_NaN(num1) || num1->len != 1) {
         return false;
     }
-    return num1->data[0] == num2;
+    if (num1->len < 0 && num2 < 0 || num1->len > 0 && num2 >= 0) {
+        return num1->data[0] == (uintmax_t)(num2 < 0 ? -num2 : num2);
+    }
+    return false;
 }
