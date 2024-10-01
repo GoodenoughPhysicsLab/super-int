@@ -16,7 +16,7 @@ struct si_bigint {
 /* [[ Private ]]
  * Calculate the size of a si_bigint
  */
-static size_t sizeof_si_bigint_(struct si_bigint const * num) {
+static size_t sizeof_si_bigint_(struct si_bigint const *num) {
     assert(num != NULL);
     return sizeof(struct si_bigint) + (num->len - 1) * sizeof(uintmax_t);
 }
@@ -40,7 +40,7 @@ struct si_bigint* si_bigint_new_from_str(char const *str) {
 
 /* Create a new si_bigint from a si_bigint
  */
-struct si_bigint* si_bigint_new_from_si_bigint(struct si_bigint const * num) {
+struct si_bigint* si_bigint_new_from_si_bigint(struct si_bigint const *num) {
     assert(num != NULL);
 
     struct si_bigint *res;
