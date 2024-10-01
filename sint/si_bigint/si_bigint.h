@@ -25,8 +25,17 @@ si_bigint* si_bigint_div(si_bigint const *, si_bigint const *);
 si_bigint* si_bigint_div_num(si_bigint const *, intmax_t const);
 si_bigint* si_bigint_mod(si_bigint const *, si_bigint const *);
 si_bigint* si_bigint_mod_num(si_bigint const *, intmax_t const);
+si_bigint* si_bigint_pow(si_bigint const *, si_bigint const *);
+si_bigint* si_bigint_pow_num(si_bigint const *, intmax_t const);
 si_bigint* si_bigint_shl(si_bigint const *);
 si_bigint* si_bigint_shr(si_bigint const *);
+si_bigint* si_bigint_not(si_bigint const *);
+si_bigint* si_bigint_and(si_bigint const *, si_bigint const *);
+si_bigint* si_bigint_and_num(si_bigint const *, intmax_t const);
+si_bigint* si_bigint_or(si_bigint const *, si_bigint const *);
+si_bigint* si_bigint_or_num(si_bigint const *, intmax_t const);
+si_bigint* si_bigint_xor(si_bigint const *, si_bigint const *);
+si_bigint* si_bigint_xor_num(si_bigint const *, intmax_t const);
 
 int si_bigint_self_abs(si_bigint const *);
 int si_bigint_self_add(si_bigint const *, si_bigint const *);
@@ -39,6 +48,8 @@ int si_bigint_self_div(si_bigint const *, si_bigint const *);
 int si_bigint_self_div_num(si_bigint const *, intmax_t const);
 int si_bigint_self_mod(si_bigint const *, si_bigint const *);
 int si_bigint_self_mod_num(si_bigint const *, intmax_t const);
+int si_bigint_self_pow(si_bigint const *, si_bigint const *);
+int si_bigint_self_pow_num(si_bigint const *, intmax_t const);
 int si_bigint_self_shl(si_bigint const *);
 int si_bigint_self_shr(si_bigint const *);
 

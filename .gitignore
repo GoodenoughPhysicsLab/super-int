@@ -1,7 +1,6 @@
-/.vs
-/.vscode
+.vs/
+.vscode/
 build/
-Testing/*
 
 /exe
 
