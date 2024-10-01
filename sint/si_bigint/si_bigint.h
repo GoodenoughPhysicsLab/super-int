@@ -38,6 +38,9 @@ si_bigint* si_bigint_or_num(si_bigint const *, intmax_t const);
 si_bigint* si_bigint_xor(si_bigint const *, si_bigint const *);
 si_bigint* si_bigint_xor_num(si_bigint const *, intmax_t const);
 
+/* error codes:
+ * 0 - success
+ */
 int si_bigint_self_abs(si_bigint *);
 int si_bigint_self_add(si_bigint *, si_bigint const *);
 int si_bigint_self_add_num(si_bigint *, intmax_t const);
