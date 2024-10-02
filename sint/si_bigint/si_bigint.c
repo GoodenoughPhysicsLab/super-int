@@ -4,46 +4,72 @@
 #include <assert.h>
 #include "si_bigint.h"
 
+typedef intmax_t len_type_;
+typedef uintmax_t data_type_;
+
 struct si_bigint {
-    /* Length of data
-     * if si_bigint is negative, len < 0, else len > 0
+    /* if si_bigint is negative, len < 0, else len > 0
+     *
      * if si_bigint is NaN, len == 0
      */
-    intmax_t len;
-    uintmax_t data[1];
+    len_type_ len;
+    data_type_ data[1];
 };
 
 /* [[ Private ]]
  * Calculate the size of a si_bigint
  */
-static size_t sizeof_si_bigint_(struct si_bigint const *num) {
+static size_t sizeof_si_bigint_(si_bigint const *num) {
     assert(num != NULL);
-    return sizeof(struct si_bigint) + (num->len - 1) * sizeof(uintmax_t);
+    return sizeof(si_bigint) + (num->len - 1) * sizeof(uintmax_t);
+}
+
+/* [[ Private ]]
+ * Reallocate memory of a si_bigint
+ */
+static void realloc_si_bigint_(si_bigint **const num, size_t const len) {
+    assert(num != NULL);
+
+    if (len > (*num)->len) {
+        *num = (si_bigint*)realloc(
+            *num, sizeof(si_bigint) + sizeof(data_type_) * (len - 1)
+        );
+    }
+    assert(*num != NULL);
 }
 
 /* Create a new si_bigint from a number
  */
-struct si_bigint* si_bigint_new_from_num(intmax_t const num) {
-    struct si_bigint *res = (struct si_bigint*)malloc(sizeof(struct si_bigint));
+si_bigint* si_bigint_new_from_num(intmax_t const num) {
+    si_bigint *res = (si_bigint*)malloc(sizeof(si_bigint));
     res->len = num < 0 ? -1 : 1;
-    res->data[0] = num < 0 ? -num : num;
+    res->data[0] = (data_type_)(num < 0 ? -num : num);
     return res;
 }
 
 /* Create a new si_bigint from a string
  */
-struct si_bigint* si_bigint_new_from_str(char const *str) {
+si_bigint* si_bigint_new_from_str(char const*const str) {
     assert(str != NULL);
 
-    // TODO
+    si_bigint *res;
+    if (str[0] == '0' && str[1] == 'b') {
+        // TODO
+    } else if (str[0] == '0' && str[1] == 'x') {
+        //
+    } else {
+        //
+    }
+
+    return res;
 }
 
 /* Create a new si_bigint from a si_bigint
  */
-struct si_bigint* si_bigint_new_from_si_bigint(struct si_bigint const *num) {
+si_bigint* si_bigint_new_from_si_bigint(si_bigint const*const num) {
     assert(num != NULL);
 
-    struct si_bigint *res;
+    si_bigint *res;
     memcpy(res, num, sizeof_si_bigint_(num));
     return res;
 }
@@ -56,42 +82,94 @@ void si_bigint_del(si_bigint *num) {
     free(num);
 }
 
-char const* si_bigint_to_str(si_bigint const *num) {
-    assert(num != NULL);
+/* Return true if a si_bigint is NaN
+ */
+bool si_bigint_is_NaN(si_bigint const*const num) {
+    return num->len == 0;
+}
+
+void si_bigint_to_bcd(si_bigint **const num) {
+    assert(num != NULL && *num != NULL);
 
     // TODO
 }
 
-/* Return true if a si_bigint is NaN
+#ifndef SI_BIGINT_NO_PRINT
+#include <stdio.h>
+
+/* Print a si_bigint to stdout
  */
-bool si_bigint_is_NaN(si_bigint const *num) {
-    return num->len == 0;
+void si_bigint_print(si_bigint const*const num) {
+    assert(num != NULL);
+
+    si_bigint *tmp = si_bigint_new_from_si_bigint(num);
+
+    // TODO
+}
+#endif
+
+/* absolute value of itself
+ */
+void si_bigint_abs(si_bigint *const num) {
+    assert(num != NULL);
+
+    num->len = num->len < 0 ? -num->len : num->len;
 }
 
 /* Reverse every bit of itself
+ *
  *  @prama num: The si_bigint number to be reversed
  */
-void si_bigint_not(si_bigint **num) {
+void si_bigint_not(si_bigint *const num) {
     assert(num != NULL);
 
-    if (si_bigint_is_NaN(*num)) {
+    if (si_bigint_is_NaN(num)) {
         return;
     }
 
-    for (int i = 0; i < (*num)->len; ++i) {
-        (*num)->data[i] = ~(*num)->data[i];
+    for (int i = 0; i < num->len; ++i) {
+        num->data[i] = ~num->data[i];
     }
     return;
 }
 
-bool si_bigint_eq_num(si_bigint const *num1, intmax_t const num2) {
+/* Bitwise AND with a number
+ */
+void si_bigint_and_num(si_bigint *const num1, uintmax_t const num2) {
     assert(num1 != NULL);
 
-    if (num1->len != 1 || si_bigint_is_NaN(num1)) {
+    if (si_bigint_is_NaN(num1)) {
+        return;
+    }
+
+    num1->data[0] &= num2;
+}
+
+/* Bitwise AND with another si_bigint
+ */
+void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
+    assert(num1 != NULL && *num1 != NULL && num2 != NULL);
+
+    if (si_bigint_is_NaN(*num1) || si_bigint_is_NaN(num2)) {
+        return;
+    }
+
+    realloc_si_bigint_(num1, num2->len);
+    for (int i = 0; i < num2->len; ++i) {
+        (*num1)->data[i] &= num2->data[i];
+    }
+}
+
+/* Compare a si_bigint with a number
+ */
+bool si_bigint_eq_num(si_bigint const*const num1, intmax_t const num2) {
+    assert(num1 != NULL);
+
+    if (num1->len != 1 && num1->len != -1 || si_bigint_is_NaN(num1)) {
         return false;
     }
     if (num1->len < 0 && num2 < 0 || num1->len > 0 && num2 >= 0) {
-        return num1->data[0] == (uintmax_t)(num2 < 0 ? -num2 : num2);
+        return num1->data[0] == (data_type_)(num2 < 0 ? -num2 : num2);
     }
     return false;
 }
