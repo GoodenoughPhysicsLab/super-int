@@ -71,15 +71,15 @@ bool si_bigint_is_NaN(si_bigint const *num) {
 /* Reverse every bit of itself
  *  @prama num: The si_bigint number to be reversed
  */
-void si_bigint_not(si_bigint *num) {
+void si_bigint_not(si_bigint **num) {
     assert(num != NULL);
 
-    if (si_bigint_is_NaN(num)) {
+    if (si_bigint_is_NaN(*num)) {
         return;
     }
 
-    for (int i = 0; i < num->len; i++) {
-        num->data[i] = ~num->data[i];
+    for (int i = 0; i < (*num)->len; ++i) {
+        (*num)->data[i] = ~(*num)->data[i];
     }
     return;
 }
@@ -87,7 +87,7 @@ void si_bigint_not(si_bigint *num) {
 bool si_bigint_eq_num(si_bigint const *num1, intmax_t const num2) {
     assert(num1 != NULL);
 
-    if (si_bigint_is_NaN(num1) || num1->len != 1) {
+    if (num1->len != 1 || si_bigint_is_NaN(num1)) {
         return false;
     }
     if (num1->len < 0 && num2 < 0 || num1->len > 0 && num2 >= 0) {
@@ -95,3 +95,4 @@ bool si_bigint_eq_num(si_bigint const *num1, intmax_t const num2) {
     }
     return false;
 }
+
