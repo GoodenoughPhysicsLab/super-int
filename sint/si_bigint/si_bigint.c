@@ -1,8 +1,13 @@
+#include <immintrin.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include "si_bigint.h"
+
+#ifndef SI_BIGINT_SIMD
+#include <intrin.h>
+#endif
 
 typedef intmax_t len_type_;
 typedef uintmax_t data_type_;
@@ -25,12 +30,21 @@ static size_t sizeof_si_bigint_(si_bigint const *num) {
 }
 
 /* [[ Private ]]
+ * Get the length of a si_bigint
+ */
+static len_type_ get_si_bigint_len_(si_bigint const*const num) {
+    assert(num != NULL);
+
+    return num->len < 0 ? -num->len : num->len;
+}
+
+/* [[ Private ]]
  * Reallocate memory of a si_bigint
  */
 static void realloc_si_bigint_(si_bigint **const num, size_t const len) {
     assert(num != NULL);
 
-    if (len > (*num)->len) {
+    if (len > get_si_bigint_len_(*num)) {
         *num = (si_bigint*)realloc(
             *num, sizeof(si_bigint) + sizeof(data_type_) * (len - 1)
         );
@@ -113,7 +127,7 @@ void si_bigint_print(si_bigint const*const num) {
 void si_bigint_abs(si_bigint *const num) {
     assert(num != NULL);
 
-    num->len = num->len < 0 ? -num->len : num->len;
+    num->len = get_si_bigint_len_(num);
 }
 
 /* Reverse every bit of itself
@@ -127,7 +141,7 @@ void si_bigint_not(si_bigint *const num) {
         return;
     }
 
-    for (int i = 0; i < num->len; ++i) {
+    for (int i = 0; i < get_si_bigint_len_(num); ++i) {
         num->data[i] = ~num->data[i];
     }
     return;
@@ -154,10 +168,25 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
         return;
     }
 
-    realloc_si_bigint_(num1, num2->len);
-    for (int i = 0; i < num2->len; ++i) {
+    realloc_si_bigint_(num1, get_si_bigint_len_(num2));
+#ifdef SI_BIGINT_SIMD
+    for (int i = 0; i < get_si_bigint_len_(num2);
+    #if UINTMAX_MAX == 18446744073709551615ULL
+                i += 4
+    #elif UINTMAX_MAX == 4294967295UL
+                i += 8
+    #endif // UINTMAX_MAX
+    ) {
+        __m256i tmp1 = _mm256_loadu_si256((__m256i*)&(*num1)->data[i]);
+        __m256i tmp2 = _mm256_loadu_si256((__m256i*)&num2->data[i]);
+        tmp1 = _mm256_and_si256(tmp1, tmp2);
+        _mm256_storeu_si256((__m256i*)&(*num1)->data[i], tmp1);
+    }
+#else // ^^^ SI_BIGINT_SIMD / vvv !SI_BIGINT_SIMD
+    for (int i = 0; i < get_si_bigint_len_(num2); ++i) {
         (*num1)->data[i] &= num2->data[i];
     }
+#endif // SI_BIGINT_SIMD
 }
 
 /* Compare a si_bigint with a number
@@ -165,7 +194,7 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
 bool si_bigint_eq_num(si_bigint const*const num1, intmax_t const num2) {
     assert(num1 != NULL);
 
-    if (num1->len != 1 && num1->len != -1 || si_bigint_is_NaN(num1)) {
+    if (get_si_bigint_len_(num1) != 1 || si_bigint_is_NaN(num1)) {
         return false;
     }
     if (num1->len < 0 && num2 < 0 || num1->len > 0 && num2 >= 0) {
@@ -173,4 +202,3 @@ bool si_bigint_eq_num(si_bigint const*const num1, intmax_t const num2) {
     }
     return false;
 }
-

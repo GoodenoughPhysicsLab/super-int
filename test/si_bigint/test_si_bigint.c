@@ -15,8 +15,17 @@ Def_TEST_(eq) {
     // assert(!si_bigint_eq(a, c));
 }
 
+Def_TEST_(and) {
+    si_bigint *a = si_bigint_new_from_num(3);
+    si_bigint *b = si_bigint_new_from_num(1);
+
+    si_bigint_and(&a, b);
+    assert(si_bigint_eq_num(a, 1));
+}
+
 int main(void) {
     Run_TEST_(eq);
+    Run_TEST_(and);
 
     return 0;
 }
