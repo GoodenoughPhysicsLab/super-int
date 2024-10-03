@@ -8,6 +8,7 @@ build/
 *.pdb
 *.exe
 *.s
+*.o
 
 *.txt
 !CMakeLists.txt

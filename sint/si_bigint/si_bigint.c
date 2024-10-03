@@ -1,12 +1,11 @@
-#include <immintrin.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include "si_bigint.h"
 
-#ifndef SI_BIGINT_SIMD
-#include <intrin.h>
+#ifdef SI_BIGINT_SIMD
+    #include <intrin.h>
 #endif
 
 typedef intmax_t len_type_;
@@ -170,18 +169,24 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
 
     realloc_si_bigint_(num1, get_si_bigint_len_(num2));
 #ifdef SI_BIGINT_SIMD
+    #if defined(__AVX2__)
     for (int i = 0; i < get_si_bigint_len_(num2);
-    #if UINTMAX_MAX == 18446744073709551615ULL
+        #if UINTMAX_MAX == 18446744073709551615ULL
                 i += 4
-    #elif UINTMAX_MAX == 4294967295UL
+        #elif UINTMAX_MAX == 4294967295UL
                 i += 8
-    #endif // UINTMAX_MAX
+        #else
+            #error "Your old mechine support simd?"
+        #endif // UINTMAX_MAX
     ) {
         __m256i tmp1 = _mm256_loadu_si256((__m256i*)&(*num1)->data[i]);
         __m256i tmp2 = _mm256_loadu_si256((__m256i*)&num2->data[i]);
         tmp1 = _mm256_and_si256(tmp1, tmp2);
         _mm256_storeu_si256((__m256i*)&(*num1)->data[i], tmp1);
     }
+    #elif defined(__ARM_NEON__)
+        //
+    #endif // __AVX2__
 #else // ^^^ SI_BIGINT_SIMD / vvv !SI_BIGINT_SIMD
     for (int i = 0; i < get_si_bigint_len_(num2); ++i) {
         (*num1)->data[i] &= num2->data[i];
