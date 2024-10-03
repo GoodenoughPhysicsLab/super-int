@@ -41,12 +41,14 @@ static len_type_ get_si_bigint_len_(si_bigint const*const num) {
  * Reallocate memory of a si_bigint
  */
 static void realloc_si_bigint_(si_bigint **const num, size_t const len) {
-    assert(num != NULL);
+    assert(num != NULL && *num != NULL);
 
-    if (len > get_si_bigint_len_(*num)) {
+    len_type_ pre_len = get_si_bigint_len_(*num);
+    if (len > pre_len) {
         *num = (si_bigint*)realloc(
             *num, sizeof(si_bigint) + sizeof(data_type_) * (len - 1)
         );
+        memset(&(*num)->data[pre_len - 1], 0, (len - pre_len) * sizeof(data_type_));
     }
     assert(*num != NULL);
 }
