@@ -8,18 +8,6 @@
     #include <intrin.h>
 #endif
 
-typedef intmax_t len_type_;
-typedef uintmax_t data_type_;
-
-struct si_bigint {
-    /* if si_bigint is negative, len < 0, else len > 0
-     *
-     * if si_bigint is NaN, len == 0
-     */
-    len_type_ len;
-    data_type_ data[1];
-};
-
 /* [[ Private ]]
  * Calculate the size of a si_bigint
  */
@@ -40,17 +28,29 @@ static len_type_ get_si_bigint_len_(si_bigint const*const num) {
 /* [[ Private ]]
  * Reallocate memory of a si_bigint
  */
-static void realloc_si_bigint_(si_bigint **const num, size_t const len) {
+static int realloc_si_bigint_(si_bigint **const num, size_t const len) {
     assert(num != NULL && *num != NULL);
 
     len_type_ pre_len = get_si_bigint_len_(*num);
     if (len > pre_len) {
-        *num = (si_bigint*)realloc(
+        si_bigint *tmp = (si_bigint*)realloc(
             *num, sizeof(si_bigint) + sizeof(data_type_) * (len - 1)
         );
-        memset(&(*num)->data[pre_len - 1], 0, (len - pre_len) * sizeof(data_type_));
+        if (tmp == NULL) {
+            free(*num);
+            *num = NULL;
+            return 1;
+        }
+
+        if ((*num)->len < 0) {
+            tmp->len = -len;
+        } else {
+            tmp->len = len;
+        }
+        memset(&tmp->data[pre_len], 0, (len - pre_len) * sizeof(data_type_));
+        *num = tmp;
     }
-    assert(*num != NULL);
+    return 0;
 }
 
 /* Create a new si_bigint from a number
@@ -62,10 +62,43 @@ si_bigint* si_bigint_new_from_num(intmax_t const num) {
     return res;
 }
 
+#ifndef NDEBUG
+#include <stdarg.h>
+/* Create a new si_bigint from a multi-number
+ */
+si_bigint* si_bigint_new_from_multi_num_(len_type_ sign_and_len_arg, ...) {
+    va_list args;
+    va_start(args, sign_and_len_arg);
+
+    si_bigint *res = (si_bigint*)malloc(
+        sizeof(si_bigint)
+        + ((sign_and_len_arg < 0 ? -sign_and_len_arg : sign_and_len_arg) - 1) * sizeof(data_type_)
+    );
+    res->len = sign_and_len_arg;
+    for (len_type_ i = 0; i != (sign_and_len_arg < 0 ? -sign_and_len_arg : sign_and_len_arg); ++i) {
+        res->data[i] = va_arg(args, data_type_);
+    }
+
+    return res;
+}
+#endif
+
 /* Create a new si_bigint from a string
  */
-si_bigint* si_bigint_new_from_str(char const*const str) {
+si_bigint* si_bigint_new_from_str(char const* str) {
     assert(str != NULL);
+
+    if (strlen(str) == 0) {
+        return si_bigint_new_from_num(0);
+    }
+
+    bool is_negative;
+    if (str[0] == '-') {
+        is_negative = true;
+        ++str;
+    } else {
+        is_negative = false;
+    }
 
     si_bigint *res;
     if (str[0] == '0' && str[1] == 'b') {
@@ -169,7 +202,12 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
         return;
     }
 
-    realloc_si_bigint_(num1, get_si_bigint_len_(num2));
+    if (realloc_si_bigint_(num1, get_si_bigint_len_(num2))) {
+        abort();
+    }
+    if ((*num1)->len < 0 && num2->len > 0 || (*num1)->len > 0 && num2->len < 0) {
+        (*num1)->len = (*num1)->len > 0 ? -(*num1)->len : (*num1)->len;
+    }
 #ifdef SI_BIGINT_SIMD
     #if defined(__AVX2__)
     for (int i = 0; i < get_si_bigint_len_(num2);
@@ -201,11 +239,16 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
 bool si_bigint_eq_num(si_bigint const*const num1, intmax_t const num2) {
     assert(num1 != NULL);
 
-    if (get_si_bigint_len_(num1) != 1 || si_bigint_is_NaN(num1)) {
+    if (si_bigint_is_NaN(num1)
+        || num2 < 0 && num1->len > 0 || num2 >= 0 && num1->len < 0
+        || num1->data[0] != (num2 < 0 ? -num2 : num2))
+    {
         return false;
     }
-    if (num1->len < 0 && num2 < 0 || num1->len > 0 && num2 >= 0) {
-        return num1->data[0] == (data_type_)(num2 < 0 ? -num2 : num2);
+    for (int i = 1; i < get_si_bigint_len_(num1); ++i) {
+        if (num1->data[i] != 0) {
+            return false;
+        }
     }
-    return false;
+    return true;
 }

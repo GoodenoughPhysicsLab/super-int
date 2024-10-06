@@ -7,10 +7,23 @@
 extern "C" {
 #endif // __cplusplus
 
-typedef struct si_bigint si_bigint;
+typedef intmax_t len_type_;
+typedef uintmax_t data_type_;
+
+typedef struct si_bigint {
+    /* if si_bigint is negative, len < 0, else len > 0
+     *
+     * if si_bigint is NaN, len == 0
+     */
+    len_type_ len;
+    data_type_ data[1];
+} si_bigint;
 
 si_bigint* si_bigint_new_from_num(intmax_t const);
-si_bigint* si_bigint_new_from_str(char const*const);
+#ifndef NDEBUG
+si_bigint* si_bigint_new_from_multi_num_(len_type_, ...);
+#endif
+si_bigint* si_bigint_new_from_str(char const*);
 si_bigint* si_bigint_new_from_si_bigint(si_bigint const*const);
 void si_bigint_del(si_bigint *);
 bool si_bigint_is_NaN(si_bigint const*const);
