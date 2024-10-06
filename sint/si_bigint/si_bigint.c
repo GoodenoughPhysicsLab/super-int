@@ -6,7 +6,7 @@
 
 #ifdef SI_BIGINT_SIMD
     #include <intrin.h>
-#endif
+#endif // SI_BIGINT_SIMD
 
 /* [[ Private ]]
  * Calculate the size of a si_bigint
@@ -81,7 +81,7 @@ si_bigint* si_bigint_new_from_multi_num_(len_type_ sign_and_len_arg, ...) {
 
     return res;
 }
-#endif
+#endif // NDEBUG
 
 /* Create a new si_bigint from a string
  */
@@ -117,7 +117,7 @@ si_bigint* si_bigint_new_from_str(char const* str) {
 si_bigint* si_bigint_new_from_si_bigint(si_bigint const*const num) {
     assert(num != NULL);
 
-    si_bigint *res;
+    si_bigint *res = (si_bigint*)malloc(sizeof_si_bigint_(num));
     memcpy(res, num, sizeof_si_bigint_(num));
     return res;
 }
@@ -154,7 +154,7 @@ void si_bigint_print(si_bigint const*const num) {
 
     // TODO
 }
-#endif
+#endif // SI_BIGINT_NO_PRINT
 
 /* absolute value of itself
  */
@@ -211,9 +211,9 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
 #ifdef SI_BIGINT_SIMD
     #if defined(__AVX2__)
     for (int i = 0; i < get_si_bigint_len_(num2);
-        #if UINTMAX_MAX == 18446744073709551615ULL
+        #if UINTMAX_MAX == 18446744073709551615ULL // 64 bit
                 i += 4
-        #elif UINTMAX_MAX == 4294967295UL
+        #elif UINTMAX_MAX == 4294967295UL // 32 bit
                 i += 8
         #else
             #error "Your old mechine support simd?"
@@ -245,7 +245,8 @@ bool si_bigint_eq_num(si_bigint const*const num1, intmax_t const num2) {
     {
         return false;
     }
-    for (int i = 1; i < get_si_bigint_len_(num1); ++i) {
+    len_type_ num1_len = get_si_bigint_len_(num1);
+    for (int i = 1; i < num1_len; ++i) {
         if (num1->data[i] != 0) {
             return false;
         }

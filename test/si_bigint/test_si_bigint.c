@@ -19,6 +19,10 @@ Def_TEST_(eq) {
     assert(si_bigint_eq_num(c, -1));
     // assert(si_bigint_eq(a, b));
     // assert(!si_bigint_eq(a, c));
+
+    si_bigint_del(a);
+    si_bigint_del(b);
+    si_bigint_del(c);
 }
 
 Def_TEST_(and) {
@@ -30,6 +34,9 @@ Def_TEST_(and) {
 
     si_bigint_and(&a, b);
     assert(si_bigint_eq_num(a, -1));
+
+    si_bigint_del(a);
+    si_bigint_del(b);
 }
 
 void test_exit(int signal) {
