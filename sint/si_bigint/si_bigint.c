@@ -5,11 +5,17 @@
 #include "si_bigint.h"
 
 #ifdef SINT_SIMD
-    #ifdef _WIN32
-        #include <intrin.h>
+    #if defined(__AVX2__)
+        #ifdef _WIN32
+            #include <intrin.h>
+        #else // ^^^ _WIN32 / vvv POSIX
+            #include <immintrin.h>
+        #endif // _WIN32
+    #elif defined(__ARM_NEON__)
+        #include <arm_neon.h>
     #else
-        #include <immintrin.h>
-    #endif
+        #error "simd (avx2 or neon) not support"
+    #endif // __AVX2__
 #endif // SINT_SIMD
 
 /* [[ Private ]]
@@ -214,26 +220,34 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
         (*num1)->len = (*num1)->len > 0 ? -(*num1)->len : (*num1)->len;
     }
 #ifdef SINT_SIMD
-    #if defined(__AVX2__)
     for (int i = 0; i < get_si_bigint_len_(num2);
-        #if UINTMAX_MAX == 18446744073709551615ULL // 64 bit
+    #if UINTMAX_MAX == 18446744073709551615ULL // 64 bit
                 i += 4
-        #elif UINTMAX_MAX == 4294967295UL // 32 bit
+    #elif UINTMAX_MAX == 4294967295UL // 32 bit
                 i += 8
-        #else
+    #else
             #error "Your old mechine support simd?"
-        #endif // UINTMAX_MAX
+    #endif // UINTMAX_MAX
     ) {
+    #if defined(__AVX2__)
         __m256i tmp1 = _mm256_loadu_si256((__m256i*)&(*num1)->data[i]);
         __m256i tmp2 = _mm256_loadu_si256((__m256i*)&num2->data[i]);
         tmp1 = _mm256_and_si256(tmp1, tmp2);
         _mm256_storeu_si256((__m256i*)&(*num1)->data[i], tmp1);
-    }
     #elif defined(__ARM_NEON__)
-        //
+        #if UINTMAX_MAX == 18446744073709551615ULL // 64 bit
+        uint8x16_t tmp1 = vld1q_u64(&(*num1)->data[i]);
+        uint8x16_t tmp2 = vld1q_u64(&(*num1)->data[i]);
+        #elif UINTMAX_MAX == 4294967295UL // 32 bit
+        uint8x16_t tmp1 = vld1q_u32(&(*num1)->data[i]);
+        uint8x16_t tmp2 = vld1q_u32(&(*num1)->data[i]);
+        #endif
+        tmp1 = vandq_u8(tmp1, tmp2);
+        vst1q_u8(&(*num1)->data[i], tmp1);
     #else
         #error "simd (avx2 or neon) not support"
     #endif // __AVX2__
+    }
 #else // ^^^ SINT_SIMD / vvv !SINT_SIMD
     for (int i = 0; i < get_si_bigint_len_(num2); ++i) {
         (*num1)->data[i] &= num2->data[i];
