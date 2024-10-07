@@ -4,9 +4,9 @@
 #include <assert.h>
 #include "si_bigint.h"
 
-#ifdef SI_BIGINT_SIMD
+#ifdef SINT_SIMD
     #include <intrin.h>
-#endif // SI_BIGINT_SIMD
+#endif // SINT_SIMD
 
 /* [[ Private ]]
  * Calculate the size of a si_bigint
@@ -102,6 +102,7 @@ si_bigint* si_bigint_new_from_str(char const* str) {
 
     si_bigint *res;
     if (str[0] == '0' && str[1] == 'b') {
+        res = (si_bigint*)malloc(strlen(str) - 2);
         // TODO
     } else if (str[0] == '0' && str[1] == 'x') {
         //
@@ -208,7 +209,7 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
     if ((*num1)->len < 0 && num2->len > 0 || (*num1)->len > 0 && num2->len < 0) {
         (*num1)->len = (*num1)->len > 0 ? -(*num1)->len : (*num1)->len;
     }
-#ifdef SI_BIGINT_SIMD
+#ifdef SINT_SIMD
     #if defined(__AVX2__)
     for (int i = 0; i < get_si_bigint_len_(num2);
         #if UINTMAX_MAX == 18446744073709551615ULL // 64 bit
@@ -226,12 +227,14 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
     }
     #elif defined(__ARM_NEON__)
         //
+    #else
+        #error "simd (avx2 or neon) not support"
     #endif // __AVX2__
-#else // ^^^ SI_BIGINT_SIMD / vvv !SI_BIGINT_SIMD
+#else // ^^^ SINT_SIMD / vvv !SINT_SIMD
     for (int i = 0; i < get_si_bigint_len_(num2); ++i) {
         (*num1)->data[i] &= num2->data[i];
     }
-#endif // SI_BIGINT_SIMD
+#endif // SINT_SIMD
 }
 
 /* Compare a si_bigint with a number

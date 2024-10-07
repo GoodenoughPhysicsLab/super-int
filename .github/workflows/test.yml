@@ -3,8 +3,8 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  build:
-    name: ${{ matrix.os }}
+  test_without_simd:
+    name: ${{ matrix.os }}(no simd)
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -19,6 +19,26 @@ jobs:
         cmake --build build
 
     - name: Run tests
+      run: |
+        cd build
+        ctest -C Debug
+
+  test_with_simd:
+    name: ${{ matrix.os }}(simd)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-13, macos-14]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build simd tests
+      run: |
+        cmake -S test -B build -DSINT_SIMD=ON
+        cmake --build build
+
+    - name: Run simd tests
       run: |
         cd build
         ctest -C Debug

@@ -1,15 +1,10 @@
 #pragma once
 
-#include <cassert>
 #include <cstdint>
 #include <type_traits>
 #include <gtest/gtest.h>
 
 #include "../sint/bitint/bitint.hh"
-
-#ifdef NDEBUG
-#undef NDEBUG
-#endif
 
 namespace test_BitInt {
 
@@ -93,14 +88,14 @@ inline void compile_min() {
 
 GTEST_TEST(runtime_plusplus, _) {
     auto a = BitInt<8>{-1};
-    assert(++a == 0);
-    assert(a++ == 0);
-    assert(a == 1);
+    ASSERT_TRUE(++a == 0);
+    ASSERT_TRUE(a++ == 0);
+    ASSERT_TRUE(a == 1);
 
     auto b = BitInt<7>{1};
     int8_t c = 1;
     do {
-        assert(b++ == c);
+        ASSERT_TRUE(b++ == c);
     } while (++c != 1);
 }
 
