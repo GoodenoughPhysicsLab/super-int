@@ -238,12 +238,14 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
         #if UINTMAX_MAX == 18446744073709551615ULL // 64 bit
         uint8x16_t tmp1 = vld1q_u64(&(*num1)->data[i]);
         uint8x16_t tmp2 = vld1q_u64(&(*num1)->data[i]);
+        tmp1 = vandq_u64(tmp1, tmp2);
+        vst1q_u64(&(*num1)->data[i], tmp1);
         #elif UINTMAX_MAX == 4294967295UL // 32 bit
         uint8x16_t tmp1 = vld1q_u32(&(*num1)->data[i]);
         uint8x16_t tmp2 = vld1q_u32(&(*num1)->data[i]);
+        tmp1 = vandq_u32(tmp1, tmp2);
+        vst1q_u32(&(*num1)->data[i], tmp1);
         #endif
-        tmp1 = vandq_u8(tmp1, tmp2);
-        vst1q_u8(&(*num1)->data[i], tmp1);
     #else
         #error "simd (avx2 or neon) not support"
     #endif // __AVX2__
