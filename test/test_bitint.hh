@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "../sint/bitint.hh"
+#include "../sint/bitint/bitint.hh"
 
 #ifdef NDEBUG
 #undef NDEBUG
