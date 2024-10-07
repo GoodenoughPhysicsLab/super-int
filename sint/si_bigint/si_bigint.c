@@ -5,7 +5,11 @@
 #include "si_bigint.h"
 
 #ifdef SINT_SIMD
-    #include <intrin.h>
+    #ifdef _WIN32
+        #include <intrin.h>
+    #else
+        #include <immintrin.h>
+    #endif
 #endif // SINT_SIMD
 
 /* [[ Private ]]
