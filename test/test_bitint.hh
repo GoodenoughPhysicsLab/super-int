@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdint>
 #include <type_traits>
+#include <gtest/gtest.h>
 
 #include "../sint/bitint/bitint.hh"
 
@@ -90,7 +91,7 @@ inline void compile_min() {
     static_assert(BitInt<63>::min_num == static_cast<intmax_t>(1) << 63);
 }
 
-inline void runtime_plusplus() noexcept {
+GTEST_TEST(runtime_plusplus, _) {
     auto a = BitInt<8>{-1};
     assert(++a == 0);
     assert(a++ == 0);
