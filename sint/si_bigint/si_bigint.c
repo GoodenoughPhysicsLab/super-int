@@ -226,36 +226,40 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
         (*num1)->len = (*num1)->len > 0 ? -(*num1)->len : (*num1)->len;
     }
 #ifdef SINT_SIMD
-    for (int i = 0; i < get_si_bigint_len_(num2);
-    #if defined(UINTMAX_T_IS_64BIT)
-                i += 4
-    #elif defined(UINTMAX_T_IS_32BIT)
-                i += 8
-    #else
-            #error "Your old mechine support simd?"
-    #endif // UINTMAX_MAX
-    ) {
     #if defined(__AVX2__)
+    for (int i = 0; i < get_si_bigint_len_(num2);
+        #if defined(UINTMAX_T_IS_64BIT)
+                i += 4
+        #elif defined(UINTMAX_T_IS_32BIT)
+                i += 8
+        #else
+            #error "Your old mechine support simd?"
+        #endif // UINTMAX_MAX
+    ) {
         __m256i tmp1 = _mm256_loadu_si256((__m256i*)&(*num1)->data[i]);
         __m256i tmp2 = _mm256_loadu_si256((__m256i*)&num2->data[i]);
         tmp1 = _mm256_and_si256(tmp1, tmp2);
         _mm256_storeu_si256((__m256i*)&(*num1)->data[i], tmp1);
-    #elif defined(__ARM_NEON__)
+    }
+    #elif defined(__ARM_NEON__) // ^^^ __AVX2__ / vvv __ARM_NEON__
         #if defined(UINTMAX_T_IS_64BIT)
-        uint8x16_t tmp1 = vld1q_u8(&(*num1)->data[i]);
-        uint8x16_t tmp2 = vld1q_u8(&(*num1)->data[i]);
-        tmp1 = vandq_u8(tmp1, tmp2);
-        vst1q_u8(&(*num1)->data[i], tmp1);
-        #elif defined(UINTMAX_T_IS_32BIT)
-        uint8x16_t tmp1 = vld1q_u32(&(*num1)->data[i]);
-        uint8x16_t tmp2 = vld1q_u32(&(*num1)->data[i]);
+    for (int i = 0; i < get_si_bigint_len_(num2); i += 2) {
+        uint64x2_t tmp1 = vld1q_u64(&(*num1)->data[i]);
+        uint64x2_t tmp2 = vld1q_u64(&(*num1)->data[i]);
+        tmp1 = vandq_u64(tmp1, tmp2);
+        vst1q_u64(&(*num1)->data[i], tmp1);
+    }
+        #elif defined(UINTMAX_T_IS_32BIT) // ^^^ UINTMAX_T_IS_64BIT / vvv UINTMAX_T_IS_32BIT
+    for (int i = 0; i < get_si_bigint_len_(num2); i += 4) {
+        uint32x4_t tmp1 = vld1q_u32(&(*num1)->data[i]);
+        uint32x4_t tmp2 = vld1q_u32(&(*num1)->data[i]);
         tmp1 = vandq_u32(tmp1, tmp2);
         vst1q_u32(&(*num1)->data[i], tmp1);
-        #endif
-    #else
+    }
+        #endif // UINTMAX_T_IS_64BIT
+    #else // ^^^ __ARM_NEON__ / vvv !__ARM_NEON__
         #error "simd (avx2 or neon) not support"
     #endif // __AVX2__
-    }
 #else // ^^^ SINT_SIMD / vvv !SINT_SIMD
     for (int i = 0; i < get_si_bigint_len_(num2); ++i) {
         (*num1)->data[i] &= num2->data[i];
