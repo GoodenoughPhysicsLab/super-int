@@ -39,6 +39,17 @@ jobs:
         cmake --build build
 
     - name: Run simd tests
+      continue-on-error: true
       run: |
         cd build
         ctest -C Debug
+
+    - name: test output
+      if: matrix.os == 'windows-latest'
+      run: |
+        .\build\Debug\sint_test.exe
+
+    - name: test output
+      if: matrix.os != 'windows-latest'
+      run: |
+        ./build/sint_test
