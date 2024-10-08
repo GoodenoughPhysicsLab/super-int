@@ -243,18 +243,20 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
     }
     #elif defined(__ARM_NEON__) // ^^^ __AVX2__ / vvv __ARM_NEON__
         #if defined(UINTMAX_T_IS_64BIT)
+        #warning "!!!!!!!!! asm neon 64 bit"
     for (int i = 0; i < get_si_bigint_len_(num2); i += 2) {
         uint64x2_t tmp1 = vld1q_u64(&(*num1)->data[i]);
         uint64x2_t tmp2 = vld1q_u64(&(*num1)->data[i]);
-        tmp1 = vandq_u64(tmp1, tmp2);
-        vst1q_u64(&(*num1)->data[i], tmp1);
+        uint64x2_t tmp3 = vandq_u64(tmp1, tmp2);
+        vst1q_u64(&(*num1)->data[i], tmp3);
     }
         #elif defined(UINTMAX_T_IS_32BIT) // ^^^ UINTMAX_T_IS_64BIT / vvv UINTMAX_T_IS_32BIT
+        #warning "!!!!!!!!! asm neon 32 bit"
     for (int i = 0; i < get_si_bigint_len_(num2); i += 4) {
         uint32x4_t tmp1 = vld1q_u32(&(*num1)->data[i]);
         uint32x4_t tmp2 = vld1q_u32(&(*num1)->data[i]);
-        tmp1 = vandq_u32(tmp1, tmp2);
-        vst1q_u32(&(*num1)->data[i], tmp1);
+        uint32x4_t tmp3 = vandq_u32(tmp1, tmp2);
+        vst1q_u32(&(*num1)->data[i], tmp3);
     }
         #endif // UINTMAX_T_IS_64BIT
     #else // ^^^ __ARM_NEON__ / vvv !__ARM_NEON__

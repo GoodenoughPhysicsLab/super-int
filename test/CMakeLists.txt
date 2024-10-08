@@ -11,7 +11,7 @@ option(SINT_SIMD "Enable SINT_SIMD support" OFF)
 if (MSVC)
     add_compile_options(/Zc:preprocessor /utf-8 /DNOMINMAX /D_USE_MATH_DEFINES /EHsc /bigobj)
 else()
-    add_compile_options(-Ofast -Wall -Wextra)
+    add_compile_options(-Ofast -Wall -Wextra -Wno-parentheses)
     if (WIN32)
         add_compile_options(-finput-charset=utf-8 -fexec-charset=utf-8)
     endif()
@@ -19,6 +19,7 @@ endif()
 
 # Fetch and build GoogleTest
 # https://github.com/google/googletest/tree/main/googletest
+message(STATUS "Cloning GoogleTest")
 include(FetchContent)
 FetchContent_Declare(
   googletest
