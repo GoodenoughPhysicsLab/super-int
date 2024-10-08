@@ -4,6 +4,7 @@ project(sint_test)
 enable_testing()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_BUILD_TYPE Debug)
 
 option(SINT_SIMD "Enable SINT_SIMD support" OFF)
 
