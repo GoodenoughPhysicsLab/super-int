@@ -15,7 +15,7 @@ jobs:
 
     - name: Build tests
       run: |
-        cmake -S test -B build
+        cmake -S test -B build -Wno-dev
         cmake --build build
 
     - name: Run tests
@@ -35,7 +35,7 @@ jobs:
 
     - name: Build simd tests
       run: |
-        cmake -S test -B build -DSINT_SIMD=ON
+        cmake -S test -B build -Wno-dev -DSINT_SIMD=ON
         cmake --build build
 
     - name: Run simd tests
