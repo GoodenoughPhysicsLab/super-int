@@ -18,6 +18,12 @@
     #endif // __AVX2__
 #endif // SINT_SIMD
 
+#if UINTMAX_MAX == 18446744073709551615ULL // 64 bit
+    #define UINTMAX_T_IS_64BIT
+#elif UINTMAX_MAX == 4294967295UL // 32 bit
+    #define UINTMAX_T_IS_32BIT
+#endif
+
 /* [[ Private ]]
  * Calculate the size of a si_bigint
  */
@@ -221,9 +227,9 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
     }
 #ifdef SINT_SIMD
     for (int i = 0; i < get_si_bigint_len_(num2);
-    #if UINTMAX_MAX == 18446744073709551615ULL // 64 bit
+    #if defined(UINTMAX_T_IS_64BIT)
                 i += 4
-    #elif UINTMAX_MAX == 4294967295UL // 32 bit
+    #elif defined(UINTMAX_T_IS_32BIT)
                 i += 8
     #else
             #error "Your old mechine support simd?"
@@ -235,12 +241,12 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
         tmp1 = _mm256_and_si256(tmp1, tmp2);
         _mm256_storeu_si256((__m256i*)&(*num1)->data[i], tmp1);
     #elif defined(__ARM_NEON__)
-        #if UINTMAX_MAX == 18446744073709551615ULL // 64 bit
-        uint8x16_t tmp1 = vld1q_u64(&(*num1)->data[i]);
-        uint8x16_t tmp2 = vld1q_u64(&(*num1)->data[i]);
-        tmp1 = vandq_u64(tmp1, tmp2);
-        vst1q_u64(&(*num1)->data[i], tmp1);
-        #elif UINTMAX_MAX == 4294967295UL // 32 bit
+        #if defined(UINTMAX_T_IS_64BIT)
+        uint8x16_t tmp1 = vld1q_u8(&(*num1)->data[i]);
+        uint8x16_t tmp2 = vld1q_u8(&(*num1)->data[i]);
+        tmp1 = vandq_u8(tmp1, tmp2);
+        vst1q_u8(&(*num1)->data[i], tmp1);
+        #elif defined(UINTMAX_T_IS_32BIT)
         uint8x16_t tmp1 = vld1q_u32(&(*num1)->data[i]);
         uint8x16_t tmp2 = vld1q_u32(&(*num1)->data[i]);
         tmp1 = vandq_u32(tmp1, tmp2);
