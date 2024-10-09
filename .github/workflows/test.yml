@@ -47,9 +47,9 @@ jobs:
     - name: test output
       if: matrix.os == 'windows-latest'
       run: |
-        .\build\Debug\sint_test.exe
+        type build\Testing\Temporary\LastTest.log
 
     - name: test output
       if: matrix.os != 'windows-latest'
       run: |
-        ./build/sint_test
+        cat build/Testing/Temporary/LastTest.log
