@@ -39,7 +39,6 @@ jobs:
         cmake --build build
 
     - name: Run simd tests
-      continue-on-error: true
       run: |
         cd build
         ctest -C Debug

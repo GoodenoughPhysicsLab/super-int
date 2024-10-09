@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../sint/si_bigint/si_bigint.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <gtest/gtest.h>
 
@@ -28,7 +27,6 @@ GTEST_TEST(and, _) {
     ASSERT_TRUE(b->data[1] == 5);
 
     si_bigint_and(&a, b);
-    printf("[[Debug]] len=%lld, data={%lld, %lld}\n", a->len, a->data[0], a->data[1]);
     ASSERT_TRUE(si_bigint_eq_num(a, -1));
 
     si_bigint_del(a);
