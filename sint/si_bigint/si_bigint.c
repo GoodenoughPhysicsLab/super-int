@@ -244,8 +244,8 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
     #elif defined(__ARM_NEON__) // ^^^ __AVX2__ / vvv __ARM_NEON__
         #if defined(UINTMAX_T_IS_64BIT)
     for (int i = 0; i < get_si_bigint_len_(num2); i += 2) {
-        uint64x2_t tmp1 = vld1q_u64((unsigned long long*)&(*num1)->data[i]);
-        uint64x2_t tmp2 = vld1q_u64((unsigned long long*)&(*num1)->data[i]);
+        uint64x2_t tmp1 = vld1q_u64(&(*num1)->data[i]);
+        uint64x2_t tmp2 = vld1q_u64(&num2->data[i]);
         tmp1 = vandq_u64(tmp1, tmp2);
         vst1q_u64((unsigned long long*)&(*num1)->data[i], tmp1);
     }
