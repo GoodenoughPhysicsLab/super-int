@@ -4,20 +4,22 @@ project(sint_test)
 enable_testing()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_BUILD_TYPE Debug)
 
 option(SINT_SIMD "Enable SINT_SIMD support" OFF)
 
 if (MSVC)
     add_compile_options(/Zc:preprocessor /utf-8 /DNOMINMAX /D_USE_MATH_DEFINES /EHsc /bigobj)
 else()
+    add_compile_options(-Ofast -Wall -Wextra -Wno-parentheses)
     if (WIN32)
         add_compile_options(-finput-charset=utf-8 -fexec-charset=utf-8)
     endif()
-    add_compile_options(-Wall -Wextra)
 endif()
 
 # Fetch and build GoogleTest
 # https://github.com/google/googletest/tree/main/googletest
+message(STATUS "Cloning GoogleTest")
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -33,10 +35,21 @@ add_executable(${CMAKE_PROJECT_NAME} ${SOURCES})
 
 if(SINT_SIMD)
     add_compile_definitions(SINT_SIMD)
-    if (MSVC)
-        target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /arch:AVX2)
-    else()
-        target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -mavx2)
+    message(STATUS ${CMAKE_SYSTEM_PROCESSOR})
+    if (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86"
+        OR CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64"
+        OR CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64")
+        if (MSVC)
+            target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /arch:AVX2)
+        else()
+            target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -mavx2)
+        endif()
+    elseif (CMAKE_SYSTEM_PROCESSOR STREQUAL "arm" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+        if (MSVC)
+            target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /arch:ARMv7VE) # no tested (win on arm)
+        else()
+            target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -mcpu=cortex-a53 -mfloat-abi=softfp -mfpu=neon)
+        endif()
     endif()
 endif()
 
