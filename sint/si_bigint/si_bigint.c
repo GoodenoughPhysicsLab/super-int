@@ -35,7 +35,7 @@ static size_t sizeof_si_bigint_(si_bigint const *num) {
 /* [[ Private ]]
  * Get the length of a si_bigint
  */
-static len_type_ get_si_bigint_len_(si_bigint const*const num) {
+inline static len_type_ get_si_bigint_len_(si_bigint const*const num) {
     assert(num != NULL);
 
     return num->len < 0 ? -num->len : num->len;
@@ -192,9 +192,43 @@ void si_bigint_not(si_bigint *const num) {
         return;
     }
 
-    for (int i = 0; i < get_si_bigint_len_(num); ++i) {
+    len_type_ num_len = get_si_bigint_len_(num);
+#ifdef SINT_SIMD
+    #if defined(__AVX2__)
+    for (int i = 0; i < num_len;
+        #if defined(UINTMAX_T_IS_64BIT)
+                i += 4
+        #elif defined(UINTMAX_T_IS_32BIT)
+                i += 8
+        #else
+            #error "your old mechine support simd?"
+        #endif
+    ) {
+        __m256i tmp = _mm256_loadu_si256((__m256i*)&num->data[i]);
+        tmp = _mm256_xor_si256(tmp, _mm256_set1_epi64x(-1));
+        _mm256_storeu_si256((__m256i*)&num->data[0], tmp);
+    }
+    #elif defined(__ARM_NEON__)
+        #if defined(UINTMAX_T_IS_64BIT)
+    for (int i = 0; i < num_len; i += 2) {
+        uint64x2_t tmp = vld1q_u64(&num->data[i]);
+        tmp = veorq_u64(tmp, vdupq_n_u64(-1));
+        vst1q_u64(&num->data[i], tmp);
+    }
+        #elif defined(UINTMAX_T_IS_32BIT) // ^^^ UINTMAX_T_IS_64BIT / vvv UINTMAX_T_IS_32BIT
+    for (int i = 0; i < num_len; i += 4) {
+        uint8x32_t tmp = vld1q_u32(&num->data[i]);
+        tmp = veorq_u32(tmp, vdupq_n_u32(-1));
+        vst1q_u32(&num->data[i], tmp);
+    }
+        #endif // UINTMAX_T_IS_32BIT
+    #endif // __ARM_NEON__
+#else // ^^^ SINT_SIMD / vvv !SINT_SIMD
+    for (int i = 0; i < num_len; ++i) {
         num->data[i] = ~num->data[i];
     }
+#endif // !SINT_SIMD
+    num->len = -num->len;
     return;
 }
 
@@ -207,6 +241,9 @@ void si_bigint_and_num(si_bigint *const num1, uintmax_t const num2) {
         return;
     }
 
+    if (!(num1->len < 0 && num2 < 0)) {
+        num1->len = num1->len < 0 ? -num1->len : num1->len;
+    }
     num1->data[0] &= num2;
 }
 
@@ -219,15 +256,16 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
         return;
     }
 
-    if (realloc_si_bigint_(num1, get_si_bigint_len_(num2))) {
+    len_type_ num2_len = get_si_bigint_len_(num2);
+    if (realloc_si_bigint_(num1, num2_len)) {
         abort();
     }
-    if ((*num1)->len < 0 && num2->len > 0 || (*num1)->len > 0 && num2->len < 0) {
-        (*num1)->len = (*num1)->len > 0 ? -(*num1)->len : (*num1)->len;
+    if (!((*num1)->len < 0 && num2->len < 0)) {
+        (*num1)->len = (*num1)->len < 0 ? -(*num1)->len : (*num1)->len;
     }
 #ifdef SINT_SIMD
     #if defined(__AVX2__)
-    for (int i = 0; i < get_si_bigint_len_(num2);
+    for (int i = 0; i < num2_len;
         #if defined(UINTMAX_T_IS_64BIT)
                 i += 4
         #elif defined(UINTMAX_T_IS_32BIT)
@@ -243,28 +281,28 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
     }
     #elif defined(__ARM_NEON__) // ^^^ __AVX2__ / vvv __ARM_NEON__
         #if defined(UINTMAX_T_IS_64BIT)
-    for (int i = 0; i < get_si_bigint_len_(num2); i += 2) {
+    for (int i = 0; i < num2_len; i += 2) {
         uint64x2_t tmp1 = vld1q_u64(&(*num1)->data[i]);
         uint64x2_t tmp2 = vld1q_u64(&num2->data[i]);
         tmp1 = vandq_u64(tmp1, tmp2);
-        vst1q_u64((unsigned long long*)&(*num1)->data[i], tmp1);
+        vst1q_u64(&(*num1)->data[i], tmp1);
     }
         #elif defined(UINTMAX_T_IS_32BIT) // ^^^ UINTMAX_T_IS_64BIT / vvv UINTMAX_T_IS_32BIT
-    for (int i = 0; i < get_si_bigint_len_(num2); i += 4) {
+    for (int i = 0; i < num2_len; i += 4) {
         uint32x4_t tmp1 = vld1q_u32(&(*num1)->data[i]);
         uint32x4_t tmp2 = vld1q_u32(&num2->data[i]);
         tmp1 = vandq_u32(tmp1, tmp2);
         vst1q_u32(&(*num1)->data[i], tmp1);
     }
-        #endif // UINTMAX_T_IS_64BIT
+        #endif // UINTMAX_T_IS_32BIT
     #else // ^^^ __ARM_NEON__ / vvv !__ARM_NEON__
         #error "simd (avx2 or neon) not support"
-    #endif // __AVX2__
+    #endif // __ARM_NEON__
 #else // ^^^ SINT_SIMD / vvv !SINT_SIMD
-    for (int i = 0; i < get_si_bigint_len_(num2); ++i) {
+    for (int i = 0; i < num2_len; ++i) {
         (*num1)->data[i] &= num2->data[i];
     }
-#endif // SINT_SIMD
+#endif // !SINT_SIMD
 }
 
 /* Compare a si_bigint with a number
