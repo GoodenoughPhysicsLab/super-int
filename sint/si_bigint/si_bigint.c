@@ -35,10 +35,10 @@ static size_t sizeof_si_bigint_(si_bigint const *num) {
 /* [[ Private ]]
  * Get the length of a si_bigint
  */
-inline static len_type_ get_si_bigint_len_(si_bigint const*const num) {
+inline static size_t get_si_bigint_len_(si_bigint const*const num) {
     assert(num != NULL);
 
-    return num->len < 0 ? -num->len : num->len;
+    return (size_t)(num->len < 0 ? -num->len : num->len);
 }
 
 /* [[ Private ]]
@@ -47,7 +47,7 @@ inline static len_type_ get_si_bigint_len_(si_bigint const*const num) {
 static int realloc_si_bigint_(si_bigint **const num, size_t const len) {
     assert(num != NULL && *num != NULL);
 
-    len_type_ pre_len = get_si_bigint_len_(*num);
+    size_t pre_len = get_si_bigint_len_(*num);
     if (len > pre_len) {
         si_bigint *tmp = (si_bigint*)realloc(
             *num, sizeof(si_bigint) + sizeof(data_type_) * (len - 1)
@@ -120,6 +120,8 @@ si_bigint* si_bigint_new_from_str(char const* str) {
     if (str[0] == '0' && str[1] == 'b') {
         res = (si_bigint*)malloc(strlen(str) - 2);
         // TODO
+    } else if (str[0] == '0' && str[1] == 'o') {
+        //
     } else if (str[0] == '0' && str[1] == 'x') {
         //
     } else {
@@ -178,7 +180,7 @@ void si_bigint_print(si_bigint const*const num) {
 void si_bigint_abs(si_bigint *const num) {
     assert(num != NULL);
 
-    num->len = get_si_bigint_len_(num);
+    num->len = (len_type_)get_si_bigint_len_(num);
 }
 
 /* Reverse every bit of itself
@@ -192,7 +194,7 @@ void si_bigint_not(si_bigint *const num) {
         return;
     }
 
-    len_type_ num_len = get_si_bigint_len_(num);
+    size_t num_len = get_si_bigint_len_(num);
 #ifdef SINT_SIMD
     #if defined(__AVX2__)
     for (int i = 0; i < num_len;
@@ -224,7 +226,7 @@ void si_bigint_not(si_bigint *const num) {
         #endif // UINTMAX_T_IS_32BIT
     #endif // __ARM_NEON__
 #else // ^^^ SINT_SIMD / vvv !SINT_SIMD
-    for (int i = 0; i < num_len; ++i) {
+    for (size_t i = 0; i < num_len; ++i) {
         num->data[i] = ~num->data[i];
     }
 #endif // !SINT_SIMD
@@ -234,7 +236,7 @@ void si_bigint_not(si_bigint *const num) {
 
 /* Bitwise AND with a number
  */
-void si_bigint_and_num(si_bigint *const num1, uintmax_t const num2) {
+void si_bigint_and_num(si_bigint *const num1, intmax_t const num2) {
     assert(num1 != NULL);
 
     if (si_bigint_is_NaN(num1)) {
@@ -256,7 +258,7 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
         return;
     }
 
-    len_type_ num2_len = get_si_bigint_len_(num2);
+    size_t num2_len = get_si_bigint_len_(num2);
     if (realloc_si_bigint_(num1, num2_len)) {
         abort();
     }
@@ -299,7 +301,7 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
         #error "simd (avx2 or neon) not support"
     #endif // __ARM_NEON__
 #else // ^^^ SINT_SIMD / vvv !SINT_SIMD
-    for (int i = 0; i < num2_len; ++i) {
+    for (size_t i = 0; i < num2_len; ++i) {
         (*num1)->data[i] &= num2->data[i];
     }
 #endif // !SINT_SIMD
@@ -312,12 +314,12 @@ bool si_bigint_eq_num(si_bigint const*const num1, intmax_t const num2) {
 
     if (si_bigint_is_NaN(num1)
         || num2 < 0 && num1->len > 0 || num2 >= 0 && num1->len < 0
-        || num1->data[0] != (num2 < 0 ? -num2 : num2))
+        || num1->data[0] != (data_type_)(num2 < 0 ? -num2 : num2))
     {
         return false;
     }
-    len_type_ num1_len = get_si_bigint_len_(num1);
-    for (int i = 1; i < num1_len; ++i) {
+    size_t num1_len = get_si_bigint_len_(num1);
+    for (size_t i = 1; i < num1_len; ++i) {
         if (num1->data[i] != 0) {
             return false;
         }

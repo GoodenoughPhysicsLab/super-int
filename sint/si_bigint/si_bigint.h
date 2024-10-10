@@ -51,11 +51,11 @@ void si_bigint_shl(si_bigint **const);
 void si_bigint_shr(si_bigint *const);
 void si_bigint_not(si_bigint *const);
 void si_bigint_and(si_bigint **const, si_bigint const*const);
-void si_bigint_and_num(si_bigint *const, uintmax_t const);
+void si_bigint_and_num(si_bigint *const, intmax_t const);
 void si_bigint_or(si_bigint **const, si_bigint const*const);
-void si_bigint_or_num(si_bigint *const, uintmax_t const);
+void si_bigint_or_num(si_bigint *const, intmax_t const);
 void si_bigint_xor(si_bigint **const, si_bigint const*const);
-void si_bigint_xor_num(si_bigint *const, uintmax_t const);
+void si_bigint_xor_num(si_bigint *const, intmax_t const);
 
 bool si_bigint_eq(si_bigint const*const, si_bigint const*const);
 bool si_bigint_eq_num(si_bigint const*const, intmax_t const);

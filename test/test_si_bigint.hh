@@ -24,8 +24,8 @@ GTEST_TEST(not, _) {
     si_bigint_not(a);
 
     ASSERT_TRUE(a->len == 2);
-    ASSERT_TRUE(a->data[0] == (~(data_type_)1));
-    ASSERT_TRUE(a->data[1] == (~(data_type_)2));
+    ASSERT_TRUE(a->data[0] == ~(data_type_)1);
+    ASSERT_TRUE(a->data[1] == ~(data_type_)2);
 }
 
 GTEST_TEST(and, _) {
