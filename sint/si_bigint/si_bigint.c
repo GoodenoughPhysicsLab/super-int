@@ -197,7 +197,7 @@ void si_bigint_not(si_bigint *const num) {
     size_t num_len = get_si_bigint_len_(num);
 #ifdef SINT_SIMD
     #if defined(__AVX2__)
-    for (int i = 0; i < num_len;
+    for (size_t i = 0; i < num_len;
         #if defined(UINTMAX_T_IS_64BIT)
                 i += 4
         #elif defined(UINTMAX_T_IS_32BIT)
@@ -212,13 +212,13 @@ void si_bigint_not(si_bigint *const num) {
     }
     #elif defined(__ARM_NEON__)
         #if defined(UINTMAX_T_IS_64BIT)
-    for (int i = 0; i < num_len; i += 2) {
+    for (size_t i = 0; i < num_len; i += 2) {
         uint64x2_t tmp = vld1q_u64(&num->data[i]);
         tmp = veorq_u64(tmp, vdupq_n_u64(-1));
         vst1q_u64(&num->data[i], tmp);
     }
         #elif defined(UINTMAX_T_IS_32BIT) // ^^^ UINTMAX_T_IS_64BIT / vvv UINTMAX_T_IS_32BIT
-    for (int i = 0; i < num_len; i += 4) {
+    for (size_t i = 0; i < num_len; i += 4) {
         uint8x32_t tmp = vld1q_u32(&num->data[i]);
         tmp = veorq_u32(tmp, vdupq_n_u32(-1));
         vst1q_u32(&num->data[i], tmp);
@@ -267,7 +267,7 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
     }
 #ifdef SINT_SIMD
     #if defined(__AVX2__)
-    for (int i = 0; i < num2_len;
+    for (size_t i = 0; i < num2_len;
         #if defined(UINTMAX_T_IS_64BIT)
                 i += 4
         #elif defined(UINTMAX_T_IS_32BIT)
@@ -283,14 +283,14 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
     }
     #elif defined(__ARM_NEON__) // ^^^ __AVX2__ / vvv __ARM_NEON__
         #if defined(UINTMAX_T_IS_64BIT)
-    for (int i = 0; i < num2_len; i += 2) {
+    for (size_t i = 0; i < num2_len; i += 2) {
         uint64x2_t tmp1 = vld1q_u64(&(*num1)->data[i]);
         uint64x2_t tmp2 = vld1q_u64(&num2->data[i]);
         tmp1 = vandq_u64(tmp1, tmp2);
         vst1q_u64(&(*num1)->data[i], tmp1);
     }
         #elif defined(UINTMAX_T_IS_32BIT) // ^^^ UINTMAX_T_IS_64BIT / vvv UINTMAX_T_IS_32BIT
-    for (int i = 0; i < num2_len; i += 4) {
+    for (size_t i = 0; i < num2_len; i += 4) {
         uint32x4_t tmp1 = vld1q_u32(&(*num1)->data[i]);
         uint32x4_t tmp2 = vld1q_u32(&num2->data[i]);
         tmp1 = vandq_u32(tmp1, tmp2);
