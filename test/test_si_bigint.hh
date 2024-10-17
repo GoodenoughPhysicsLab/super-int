@@ -26,6 +26,8 @@ GTEST_TEST(not, _) {
     ASSERT_TRUE(a->len == 2);
     ASSERT_TRUE(a->data[0] == ~(data_type_)1);
     ASSERT_TRUE(a->data[1] == ~(data_type_)2);
+
+    si_bigint_del(a);
 }
 
 GTEST_TEST(and, _) {
