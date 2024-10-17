@@ -14,9 +14,12 @@ typedef struct si_bigint {
     /* if si_bigint is negative, len < 0, else len > 0
      *
      * if si_bigint is NaN, len == 0
+     *
+     * if si_bigint is inf, data == NULL and len != 0
+     * -> len > 0 : +inf, else means -inf
      */
     len_type_ len;
-    data_type_ data[1];
+    data_type_* data;
 } si_bigint;
 
 si_bigint* si_bigint_new_from_num(intmax_t const);
@@ -27,6 +30,7 @@ si_bigint* si_bigint_new_from_str(char const*);
 si_bigint* si_bigint_new_from_si_bigint(si_bigint const*const);
 void si_bigint_del(si_bigint *);
 bool si_bigint_is_NaN(si_bigint const*const);
+bool si_bigint_is_inf(si_bigint const*const);
 void si_bigint_to_bcd(si_bigint **const);
 #ifndef SI_BIGINT_NO_PRINT
 void si_bigint_print(si_bigint const*const);

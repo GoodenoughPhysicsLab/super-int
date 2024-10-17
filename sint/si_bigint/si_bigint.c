@@ -3,6 +3,9 @@
 #include <string.h>
 #include <assert.h>
 #include "si_bigint.h"
+#ifndef SI_BIGINT_NO_PRINT
+#include <stdio.h>
+#endif
 
 #ifdef SINT_SIMD
     #if defined(__AVX2__)
@@ -29,7 +32,7 @@
  */
 static size_t sizeof_si_bigint_(si_bigint const *num) {
     assert(num != NULL);
-    return sizeof(si_bigint) + (num->len - 1) * sizeof(uintmax_t);
+    return sizeof(si_bigint) + num->len * sizeof(uintmax_t);
 }
 
 /* [[ Private ]]
@@ -44,18 +47,21 @@ inline static size_t get_si_bigint_len_(si_bigint const*const num) {
 /* [[ Private ]]
  * Reallocate memory of a si_bigint
  */
-static int realloc_si_bigint_(si_bigint **const num, size_t const len) {
+static void realloc_si_bigint_(si_bigint **const num, size_t const len) {
     assert(num != NULL && *num != NULL);
 
     size_t pre_len = get_si_bigint_len_(*num);
     if (len > pre_len) {
         si_bigint *tmp = (si_bigint*)realloc(
-            *num, sizeof(si_bigint) + sizeof(data_type_) * (len - 1)
+            *num, sizeof(si_bigint) + sizeof(data_type_) * len
         );
         if (tmp == NULL) {
             free(*num);
             *num = NULL;
-            return 1;
+#ifndef SI_BIGINT_NO_PRINT
+            perror("si_bigint::BadAllocError: fail to reallocate memory");
+#endif
+            abort();
         }
 
         if ((*num)->len < 0) {
@@ -66,14 +72,14 @@ static int realloc_si_bigint_(si_bigint **const num, size_t const len) {
         memset(&tmp->data[pre_len], 0, (len - pre_len) * sizeof(data_type_));
         *num = tmp;
     }
-    return 0;
 }
 
 /* Create a new si_bigint from a number
  */
 si_bigint* si_bigint_new_from_num(intmax_t const num) {
-    si_bigint *res = (si_bigint*)malloc(sizeof(si_bigint));
+    si_bigint *res = (si_bigint*)malloc(sizeof(si_bigint) + sizeof(data_type_));
     res->len = num < 0 ? -1 : 1;
+    res->data = (data_type_*)(&(res->data) + 1);
     res->data[0] = (data_type_)(num < 0 ? -num : num);
     return res;
 }
@@ -88,8 +94,9 @@ si_bigint* si_bigint_new_from_multi_num_(len_type_ sign_and_len_arg, ...) {
 
     si_bigint *res = (si_bigint*)malloc(
         sizeof(si_bigint)
-        + ((sign_and_len_arg < 0 ? -sign_and_len_arg : sign_and_len_arg) - 1) * sizeof(data_type_)
+        + (sign_and_len_arg < 0 ? -sign_and_len_arg : sign_and_len_arg) * sizeof(data_type_)
     );
+    res->data = (data_type_*)(&(res->data) + 1);
     res->len = sign_and_len_arg;
     for (len_type_ i = 0; i != (sign_and_len_arg < 0 ? -sign_and_len_arg : sign_and_len_arg); ++i) {
         res->data[i] = va_arg(args, data_type_);
@@ -155,6 +162,19 @@ bool si_bigint_is_NaN(si_bigint const*const num) {
     return num->len == 0;
 }
 
+/* Return true if a si_bigint is infinity
+ */
+bool si_bigint_is_inf(si_bigint const*const num) {
+    return num->data == NULL && num->len != 0;
+}
+
+/* [[ Private ]]
+ * Return true if a si_bigint is NaN or infinity
+ */
+inline static bool si_bigint_is_NaN_or_inf(si_bigint const*const num) {
+    return si_bigint_is_NaN(num) || si_bigint_is_inf(num);
+}
+
 void si_bigint_to_bcd(si_bigint **const num) {
     assert(num != NULL && *num != NULL);
 
@@ -162,8 +182,6 @@ void si_bigint_to_bcd(si_bigint **const num) {
 }
 
 #ifndef SI_BIGINT_NO_PRINT
-#include <stdio.h>
-
 /* Print a si_bigint to stdout
  */
 void si_bigint_print(si_bigint const*const num) {
@@ -190,7 +208,7 @@ void si_bigint_abs(si_bigint *const num) {
 void si_bigint_not(si_bigint *const num) {
     assert(num != NULL);
 
-    if (si_bigint_is_NaN(num)) {
+    if (si_bigint_is_NaN_or_inf(num)) {
         return;
     }
 
@@ -239,7 +257,7 @@ void si_bigint_not(si_bigint *const num) {
 void si_bigint_and_num(si_bigint *const num1, intmax_t const num2) {
     assert(num1 != NULL);
 
-    if (si_bigint_is_NaN(num1)) {
+    if (si_bigint_is_NaN_or_inf(num1)) {
         return;
     }
 
@@ -254,14 +272,12 @@ void si_bigint_and_num(si_bigint *const num1, intmax_t const num2) {
 void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
     assert(num1 != NULL && *num1 != NULL && num2 != NULL);
 
-    if (si_bigint_is_NaN(*num1) || si_bigint_is_NaN(num2)) {
+    if (si_bigint_is_NaN_or_inf(*num1) || si_bigint_is_NaN_or_inf(num2)) {
         return;
     }
 
     size_t num2_len = get_si_bigint_len_(num2);
-    if (realloc_si_bigint_(num1, num2_len)) {
-        abort();
-    }
+    realloc_si_bigint_(num1, num2_len);
     if (!((*num1)->len < 0 && num2->len < 0)) {
         (*num1)->len = (*num1)->len < 0 ? -(*num1)->len : (*num1)->len;
     }
@@ -312,7 +328,7 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
 bool si_bigint_eq_num(si_bigint const*const num1, intmax_t const num2) {
     assert(num1 != NULL);
 
-    if (si_bigint_is_NaN(num1)
+    if (si_bigint_is_NaN_or_inf(num1)
         || num2 < 0 && num1->len > 0 || num2 >= 0 && num1->len < 0
         || num1->data[0] != (data_type_)(num2 < 0 ? -num2 : num2))
     {
