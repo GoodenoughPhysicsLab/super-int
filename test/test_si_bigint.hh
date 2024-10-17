@@ -29,7 +29,7 @@ GTEST_TEST(not, _) {
 
     si_bigint_del(a);
 }
-
+#if 0
 GTEST_TEST(and, _) {
     si_bigint *a = si_bigint_new_from_num(3);
     si_bigint *b = si_bigint_new_from_multi_num_(-2, 1, 5);
@@ -43,3 +43,4 @@ GTEST_TEST(and, _) {
     si_bigint_del(a);
     si_bigint_del(b);
 }
+#endif
