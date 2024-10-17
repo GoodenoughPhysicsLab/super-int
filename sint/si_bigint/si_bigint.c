@@ -69,6 +69,7 @@ static void realloc_si_bigint_(si_bigint **const num, size_t const len) {
         } else {
             tmp->len = len;
         }
+        tmp->data = (data_type_*)(&(tmp->data) + 1);
         memset(&tmp->data[pre_len], 0, (len - pre_len) * sizeof(data_type_));
         *num = tmp;
     }
@@ -144,6 +145,7 @@ si_bigint* si_bigint_new_from_si_bigint(si_bigint const*const num) {
     assert(num != NULL);
 
     si_bigint *res = (si_bigint*)malloc(sizeof_si_bigint_(num));
+    res->data = (data_type_*)(&(res->data) + 1);
     memcpy(res, num, sizeof_si_bigint_(num));
     return res;
 }

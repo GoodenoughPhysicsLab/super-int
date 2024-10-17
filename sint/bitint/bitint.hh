@@ -97,7 +97,7 @@ public:
 
     // no need to write `BitInt(BitInt&&)`
 
-    BitInt& operator=(const intmax_t value) noexcept {
+    BitInt<N>& operator=(const intmax_t value) noexcept {
         if (value == min_num) {
             this->is_neg = true;
             this ->_value = 0;
@@ -108,7 +108,7 @@ public:
         return *this;
     }
 
-    BitInt& operator=(const BitInt& other) noexcept {
+    BitInt<N>& operator=(const BitInt<N>& other) noexcept {
         this->is_neg = other.is_neg;
         this->_value = other._value;
         return *this;
@@ -133,7 +133,8 @@ public:
         return res;
     }
 
-    constexpr BitInt operator+(const BitInt& other) const noexcept {
+    template<bitsize_type M>
+    constexpr BitInt operator+(const BitInt<M>& other) const noexcept {
         if (other.is_neg) {
             return *this - other;
         }
@@ -188,7 +189,8 @@ public:
         return res;
     }
 
-    constexpr BitInt operator-(const BitInt& other) const noexcept {
+    template<bitsize_type M>
+    constexpr BitInt operator-(const BitInt<M>& other) const noexcept {
         return *this - static_cast<ubyte>(other._value & max_num);
     }
 
@@ -208,7 +210,8 @@ public:
         return BitInt(this->_value * value);
     }
 
-    constexpr BitInt operator*(const BitInt& other) noexcept {
+    template<bitsize_type M>
+    constexpr BitInt operator*(const BitInt<M>& other) noexcept {
         return BitInt(this->_value * other._value);
     }
 
@@ -216,7 +219,8 @@ public:
         return BitInt(this->_value / value);
     }
 
-    constexpr BitInt operator/(const BitInt& other) noexcept {
+    template<bitsize_type M>
+    constexpr BitInt operator/(const BitInt<M>& other) noexcept {
         return BitInt(this->_value / other._value);
     }
 
@@ -224,7 +228,8 @@ public:
         return BitInt(this->_value % value);
     }
 
-    constexpr BitInt operator%(const BitInt& other) noexcept {
+    template<bitsize_type M>
+    constexpr BitInt operator%(const BitInt<M>& other) noexcept {
         return BitInt(this->_value % other._value);
     }
 
@@ -233,7 +238,8 @@ public:
         return *this;
     }
 
-    constexpr BitInt& operator+=(const BitInt& other) noexcept {
+    template<bitsize_type M>
+    constexpr BitInt& operator+=(const BitInt<M>& other) noexcept {
         this->_value = (this->_value + other._value) & max_num;
         return *this;
     }
@@ -243,7 +249,8 @@ public:
         return *this;
     }
 
-    constexpr BitInt& operator-=(const BitInt& other) noexcept {
+    template<bitsize_type M>
+    constexpr BitInt& operator-=(const BitInt<M>& other) noexcept {
         this->_value = (this->_value - other._value) & max_num;
         return *this;
     }
@@ -253,7 +260,8 @@ public:
         return *this;
     }
 
-    constexpr BitInt& operator*=(const BitInt& other) noexcept {
+    template<bitsize_type M>
+    constexpr BitInt& operator*=(const BitInt<M>& other) noexcept {
         this->_value = (this->_value * other._value) & max_num;
         return *this;
     }
@@ -263,7 +271,8 @@ public:
         return *this;
     }
 
-    constexpr BitInt& operator/=(const BitInt& other) noexcept {
+    template<bitsize_type M>
+    constexpr BitInt& operator/=(const BitInt<M>& other) noexcept {
         this->_value = (this->_value / other._value) & max_num;
         return *this;
     }
@@ -273,7 +282,8 @@ public:
         return *this;
     }
 
-    constexpr BitInt& operator%=(const BitInt& other) noexcept {
+    template<bitsize_type M>
+    constexpr BitInt& operator%=(const BitInt<M>& other) noexcept {
         this->_value = (this->_value % other._value) & max_num;
         return *this;
     }
@@ -282,7 +292,7 @@ public:
      * because BitInt NEVER use complement code
      * therefore, res equals to origin code of inverting code
      */
-    constexpr BitInt operator~() const noexcept {
+    constexpr BitInt<N> operator~() const noexcept {
         BitInt<N> res;
         res.is_neg = !this->is_neg;
         res._value = (this->_value + 1) & max_num;
@@ -301,7 +311,8 @@ public:
         return false;
     }
 
-    constexpr bool operator==(const BitInt& other) const noexcept {
+    template<bitsize_type M>
+    constexpr bool operator==(const BitInt<M>& other) const noexcept {
         return this->_value == other._value && this->is_neg == other.is_neg;
     }
 
@@ -309,7 +320,8 @@ public:
         return this->_value != (value & max_num);
     }
 
-    constexpr bool operator!=(const BitInt& other) const noexcept {
+    template<bitsize_type M>
+    constexpr bool operator!=(const BitInt<M>& other) const noexcept {
         return this->_value != (other._value & max_num);
     }
 
@@ -317,7 +329,8 @@ public:
         return this->_value < value;
     }
 
-    constexpr bool operator<(const BitInt& other) const noexcept {
+    template<bitsize_type M>
+    constexpr bool operator<(const BitInt<M>& other) const noexcept {
         return this->_value < (other._value & max_num);
     }
 
