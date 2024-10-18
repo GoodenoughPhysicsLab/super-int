@@ -1,10 +1,16 @@
-#pragma once
-
-#include "../sint/si_bigint/si_bigint.h"
+#include <stdio.h>
 #include <stdlib.h>
-#include <gtest/gtest.h>
+#include "../sint/si_bigint/si_bigint.h"
 
-GTEST_TEST(eq, _) {
+#define Def_TEST(name) void Def_TEST_si_bigint_##name()
+#define Run_TEST(name)      Def_TEST_si_bigint_##name()
+#define ASSERT_TRUE(expression) \
+    if (!(expression)) { \
+        printf("assertion failed: %s\n", #expression); \
+        abort(); \
+    }
+
+Def_TEST(eq) {
     si_bigint *a = si_bigint_new_from_num(1);
     si_bigint *b = si_bigint_new_from_num(1);
     si_bigint *c = si_bigint_new_from_num(-1);
@@ -19,16 +25,18 @@ GTEST_TEST(eq, _) {
     si_bigint_del(c);
 }
 
-GTEST_TEST(not, _) {
-    si_bigint *a = si_bigint_new_from_multi_num_(-2, 1, 2);
+Def_TEST(not) {
+    si_bigint *a = si_bigint_new_from_multi_num_(-4ll, 1ull, 1ull, 1ull, 2ull);
     si_bigint_not(a);
-
-    ASSERT_TRUE(a->len == 2);
+    ASSERT_TRUE(a->len == 4);
     ASSERT_TRUE(a->data[0] == ~(data_type_)1);
-    ASSERT_TRUE(a->data[1] == ~(data_type_)2);
+    ASSERT_TRUE(a->data[1] == ~(data_type_)1);
+    ASSERT_TRUE(a->data[2] == ~(data_type_)1);
+    ASSERT_TRUE(a->data[3] == ~(data_type_)2);
+    si_bigint_del(a);
 }
 
-GTEST_TEST(and, _) {
+Def_TEST(and) {
     si_bigint *a = si_bigint_new_from_num(3);
     si_bigint *b = si_bigint_new_from_multi_num_(-2, 1, 5);
     ASSERT_TRUE(b->len == -2);
@@ -40,4 +48,12 @@ GTEST_TEST(and, _) {
 
     si_bigint_del(a);
     si_bigint_del(b);
+}
+
+int main() {
+    Run_TEST(eq);
+    Run_TEST(not);
+    Run_TEST(and);
+
+    return 0;
 }

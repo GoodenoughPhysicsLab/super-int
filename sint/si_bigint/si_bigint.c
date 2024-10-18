@@ -28,20 +28,19 @@
 #endif
 
 /* [[ Private ]]
- * Calculate the size of a si_bigint
- */
-static size_t sizeof_si_bigint_(si_bigint const *num) {
-    assert(num != NULL);
-    return sizeof(si_bigint) + num->len * sizeof(uintmax_t);
-}
-
-/* [[ Private ]]
  * Get the length of a si_bigint
  */
 inline static size_t get_si_bigint_len_(si_bigint const*const num) {
     assert(num != NULL);
-
     return (size_t)(num->len < 0 ? -num->len : num->len);
+}
+
+/* [[ Private ]]
+ * Calculate the size of a si_bigint
+ */
+static size_t sizeof_si_bigint_(si_bigint const *num) {
+    assert(num != NULL);
+    return sizeof(si_bigint) + get_si_bigint_len_(num) * sizeof(data_type_);
 }
 
 /* [[ Private ]]
@@ -69,6 +68,7 @@ static void realloc_si_bigint_(si_bigint **const num, size_t const len) {
         } else {
             tmp->len = len;
         }
+        tmp->data = (data_type_*)(&(tmp->data) + 1);
         memset(&tmp->data[pre_len], 0, (len - pre_len) * sizeof(data_type_));
         *num = tmp;
     }
@@ -78,6 +78,12 @@ static void realloc_si_bigint_(si_bigint **const num, size_t const len) {
  */
 si_bigint* si_bigint_new_from_num(intmax_t const num) {
     si_bigint *res = (si_bigint*)malloc(sizeof(si_bigint) + sizeof(data_type_));
+if (res == NULL) {
+#ifndef SI_BIGINT_NO_PRINT
+        perror("si_bigint::BadAllocError: fail to allocate memory");
+#endif
+        abort();
+    }
     res->len = num < 0 ? -1 : 1;
     res->data = (data_type_*)(&(res->data) + 1);
     res->data[0] = (data_type_)(num < 0 ? -num : num);
@@ -96,11 +102,18 @@ si_bigint* si_bigint_new_from_multi_num_(len_type_ sign_and_len_arg, ...) {
         sizeof(si_bigint)
         + (sign_and_len_arg < 0 ? -sign_and_len_arg : sign_and_len_arg) * sizeof(data_type_)
     );
+    if (res == NULL) {
+#ifndef SI_BIGINT_NO_PRINT
+        perror("si_bigint::BadAllocError: fail to allocate memory\n");
+#endif
+        abort();
+    }
     res->data = (data_type_*)(&(res->data) + 1);
     res->len = sign_and_len_arg;
     for (len_type_ i = 0; i != (sign_and_len_arg < 0 ? -sign_and_len_arg : sign_and_len_arg); ++i) {
         res->data[i] = va_arg(args, data_type_);
     }
+    va_end(args);
 
     return res;
 }
@@ -144,6 +157,13 @@ si_bigint* si_bigint_new_from_si_bigint(si_bigint const*const num) {
     assert(num != NULL);
 
     si_bigint *res = (si_bigint*)malloc(sizeof_si_bigint_(num));
+if (res == NULL) {
+#ifndef SI_BIGINT_NO_PRINT
+        perror("si_bigint::BadAllocError: fail to allocate memory");
+#endif
+        abort();
+    }
+    res->data = (data_type_*)(&(res->data) + 1);
     memcpy(res, num, sizeof_si_bigint_(num));
     return res;
 }
@@ -249,7 +269,6 @@ void si_bigint_not(si_bigint *const num) {
     }
 #endif // !SINT_SIMD
     num->len = -num->len;
-    return;
 }
 
 /* Bitwise AND with a number

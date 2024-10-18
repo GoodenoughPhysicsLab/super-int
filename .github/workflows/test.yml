@@ -23,6 +23,16 @@ jobs:
         cd build
         ctest -C Debug
 
+    - name: test output
+      if: failure() && matrix.os == 'windows-latest'
+      run: |
+        type build\Testing\Temporary\LastTest.log
+
+    - name: test output
+      if: failure() && matrix.os != 'windows-latest'
+      run: |
+        cat build/Testing/Temporary/LastTest.log
+
   test_with_simd:
     name: ${{ matrix.os }}(simd)
     runs-on: ${{ matrix.os }}
@@ -44,11 +54,11 @@ jobs:
         ctest -C Debug
 
     - name: test output
-      if: matrix.os == 'windows-latest'
+      if: failure() && matrix.os == 'windows-latest'
       run: |
         type build\Testing\Temporary\LastTest.log
 
     - name: test output
-      if: matrix.os != 'windows-latest'
+      if: failure() && matrix.os != 'windows-latest'
       run: |
         cat build/Testing/Temporary/LastTest.log
