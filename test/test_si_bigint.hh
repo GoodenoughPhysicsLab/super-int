@@ -20,12 +20,14 @@ GTEST_TEST(eq, _) {
 }
 
 GTEST_TEST(not, _) {
-    si_bigint *a = si_bigint_new_from_multi_num_(-2, 1, 2);
+    si_bigint *a = si_bigint_new_from_multi_num_(-4, 1, 1, 1, 2);
     si_bigint_not(a);
 
-    ASSERT_TRUE(a->len == 2);
+    ASSERT_TRUE(a->len == 4);
     ASSERT_TRUE(a->data[0] == ~(data_type_)1);
-    ASSERT_TRUE(a->data[1] == ~(data_type_)2);
+    ASSERT_TRUE(a->data[1] == ~(data_type_)1);
+    ASSERT_TRUE(a->data[2] == ~(data_type_)1);
+    ASSERT_TRUE(a->data[3] == ~(data_type_)2);
 
     si_bigint_del(a);
 }
