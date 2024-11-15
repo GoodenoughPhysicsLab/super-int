@@ -4,7 +4,7 @@
 #include <assert.h>
 #include "si_bigint.h"
 #ifndef SI_BIGINT_NO_PRINT
-#include <stdio.h>
+    #include <stdio.h>
 #endif
 
 #ifdef SINT_SIMD
@@ -28,6 +28,21 @@
 #endif
 
 /* [[ Private ]]
+ * throw si_bigint::BadAllocError
+ */
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((noreturn))
+#elif defined(_MSC_VER)
+__declspec(noreturn)
+#endif
+inline static void throw_BadAllocError(void) {
+#ifndef SI_BIGINT_NO_PRINT
+    perror("si_bigint::BadAllocError: fail to allocate memory");
+#endif
+    abort();
+}
+
+/* [[ Private ]]
  * Get the length of a si_bigint
  */
 inline static size_t get_si_bigint_len_(si_bigint const*const num) {
@@ -38,7 +53,7 @@ inline static size_t get_si_bigint_len_(si_bigint const*const num) {
 /* [[ Private ]]
  * Calculate the size of a si_bigint
  */
-static size_t sizeof_si_bigint_(si_bigint const *num) {
+inline static size_t sizeof_si_bigint_(si_bigint const *num) {
     assert(num != NULL);
     return sizeof(si_bigint) + get_si_bigint_len_(num) * sizeof(data_type_);
 }
@@ -47,7 +62,7 @@ static size_t sizeof_si_bigint_(si_bigint const *num) {
  * Reallocate memory of a si_bigint
  */
 static void realloc_si_bigint_(si_bigint **const num, size_t const len) {
-    assert(num != NULL && *num != NULL);
+    assert(num != NULL && *num != NULL && len != 0);
 
     size_t pre_len = get_si_bigint_len_(*num);
     if (len > pre_len) {
@@ -56,21 +71,17 @@ static void realloc_si_bigint_(si_bigint **const num, size_t const len) {
         );
         if (tmp == NULL) {
             free(*num);
-            *num = NULL;
-#ifndef SI_BIGINT_NO_PRINT
-            perror("si_bigint::BadAllocError: fail to reallocate memory");
-#endif
-            abort();
+            throw_BadAllocError();
         }
 
-        if ((*num)->len < 0) {
-            tmp->len = -len;
-        } else {
-            tmp->len = len;
-        }
         tmp->data = (data_type_*)(&(tmp->data) + 1);
         memset(&tmp->data[pre_len], 0, (len - pre_len) * sizeof(data_type_));
         *num = tmp;
+    }
+    if ((*num)->len < 0) {
+        (*num)->len = -(len_type_)len;
+    } else {
+        (*num)->len = (len_type_)len;
     }
 }
 
@@ -78,11 +89,8 @@ static void realloc_si_bigint_(si_bigint **const num, size_t const len) {
  */
 si_bigint* si_bigint_new_from_num(intmax_t const num) {
     si_bigint *res = (si_bigint*)malloc(sizeof(si_bigint) + sizeof(data_type_));
-if (res == NULL) {
-#ifndef SI_BIGINT_NO_PRINT
-        perror("si_bigint::BadAllocError: fail to allocate memory");
-#endif
-        abort();
+    if (res == NULL) {
+        throw_BadAllocError();
     }
     res->len = num < 0 ? -1 : 1;
     res->data = (data_type_*)(&(res->data) + 1);
@@ -98,19 +106,14 @@ si_bigint* si_bigint_new_from_multi_num_(len_type_ sign_and_len_arg, ...) {
     va_list args;
     va_start(args, sign_and_len_arg);
 
-    si_bigint *res = (si_bigint*)malloc(
-        sizeof(si_bigint)
-        + (sign_and_len_arg < 0 ? -sign_and_len_arg : sign_and_len_arg) * sizeof(data_type_)
-    );
+    size_t len_arg = (size_t)(sign_and_len_arg < 0 ? -sign_and_len_arg : sign_and_len_arg);
+    si_bigint *res = (si_bigint*)malloc(sizeof(si_bigint) + len_arg * sizeof(data_type_));
     if (res == NULL) {
-#ifndef SI_BIGINT_NO_PRINT
-        perror("si_bigint::BadAllocError: fail to allocate memory\n");
-#endif
-        abort();
+        throw_BadAllocError();
     }
     res->data = (data_type_*)(&(res->data) + 1);
     res->len = sign_and_len_arg;
-    for (len_type_ i = 0; i != (sign_and_len_arg < 0 ? -sign_and_len_arg : sign_and_len_arg); ++i) {
+    for (len_type_ i = 0; i != len_arg; ++i) {
         res->data[i] = va_arg(args, data_type_);
     }
     va_end(args);
@@ -157,11 +160,8 @@ si_bigint* si_bigint_new_from_si_bigint(si_bigint const*const num) {
     assert(num != NULL);
 
     si_bigint *res = (si_bigint*)malloc(sizeof_si_bigint_(num));
-if (res == NULL) {
-#ifndef SI_BIGINT_NO_PRINT
-        perror("si_bigint::BadAllocError: fail to allocate memory");
-#endif
-        abort();
+    if (res == NULL) {
+        throw_BadAllocError();
     }
     res->data = (data_type_*)(&(res->data) + 1);
     memcpy(res, num, sizeof_si_bigint_(num));

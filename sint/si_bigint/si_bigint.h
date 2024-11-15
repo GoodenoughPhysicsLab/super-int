@@ -13,9 +13,9 @@ typedef uintmax_t data_type_;
 typedef struct si_bigint {
     /* if si_bigint is negative, len < 0, else len > 0
      *
-     * if si_bigint is NaN, len == 0
+     * if (len == 0) => si_bigint is NaN
      *
-     * if si_bigint is inf, data == NULL and len != 0
+     * if (data == NULL and len != 0) => si_bigint is inf
      * -> len > 0 : +inf, else means -inf
      */
     len_type_ len;

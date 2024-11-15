@@ -1,6 +1,11 @@
+[中文](README_zh.md) | English
+
 # super-int
-super-int suply c-api `si_bigint`, `si::BitInt`, `si::uBitInt` in `sint/bitint.hh` (requires C++20)
+super-int suply:
+* `si_bigint` in `sint/si_bigint/`(c99)
+* `si::BitInt`, `si::uBitInt` in `sint/bitint`(c++20)
 
 ## description
 
-## develop
+## contribute
+show more informations in [contribute.md](contribute.md)

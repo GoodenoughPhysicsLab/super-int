@@ -18,7 +18,7 @@ private:
 
 public:
     template<bits_type M>
-    constexpr uBitInt<::std::max(N, M)> operator&(uBitInt<M> const& other) const noexcept {
+    constexpr auto operator&(uBitInt<M> const& other) const noexcept {
         uBitInt<::std::max(N, M)> result{*this};
         for (decltype(data_length) i{}; i < result.data_length; ++i) {
             result.data[i] = data[i] & other.data[i];
