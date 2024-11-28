@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 #ifndef SI_BIGINT_NO_PRINT
@@ -96,6 +97,7 @@ static void expand_memory_(si_bigint **const num, size_t const len) {
 
     tmp->data = (data_type_*)&(tmp->data) + 1;
     memset(&tmp->data[pre_len], 0, (len - pre_len) * sizeof(data_type_));
+    tmp->len = (*num)->len < 0 ? -len : len;
     *num = tmp;
 }
 
@@ -265,13 +267,13 @@ void si_bigint_to_bcd(si_bigint **const num) {
 #ifndef SI_BIGINT_NO_PRINT
 /* Print a si_bigint to stdout
  */
-void si_bigint_print(si_bigint const*const num) {
-    assert(num != NULL);
+// void si_bigint_print(si_bigint const*const num) {
+//     assert(num != NULL);
 
-    si_bigint *tmp = new_si_bigint_from_si_bigint(num);
+//     si_bigint *tmp = new_si_bigint_from_si_bigint(num);
 
-    // TODO
-}
+//     // TODO
+// }
 #endif // SI_BIGINT_NO_PRINT
 
 /* absolute value of itself
@@ -282,21 +284,95 @@ void si_bigint_abs(si_bigint *const num) {
     num->len = (len_type_)get_si_bigint_len_(num);
 }
 
+/* [[ Private ]]
+ *
+ * num1 += num2
+ */
+static void si_bigint_add_num_(si_bigint **const num1, data_type_ const num2) {
+    assert(num1 != NULL && *num1 != NULL);
+
+    bool is_overflow;
+    if ((*num1)->data[0] > UINTMAX_MAX - num2) {
+        is_overflow = true;
+    } else {
+        is_overflow = false;
+    }
+
+    (*num1)->data[0] += num2;
+
+    for (int i = 1; i < get_si_bigint_len_(*num1); ++i) {
+        bool is_overflow_ = is_overflow;
+
+        if ((*num1)->data[i] > UINTMAX_MAX - 1) {
+            is_overflow = true;
+        } else {
+            is_overflow = false;
+        }
+
+        if (is_overflow_) {
+            ++(*num1)->data[i];
+        }
+    }
+
+    if (is_overflow) {
+        expand_memory_(num1, (*num1)->len + 1);
+        (*num1)->data[(*num1)-> len - 1] = 1;
+    }
+}
+
+/* [[ Private ]]
+ *
+ * num1 -= num2
+ */
+static void si_bigint_sub_num_(si_bigint **const num1, data_type_ const num2) {
+
+}
+
+/* Add a number to a si_bigint
+ */
+void si_bigint_add_num(si_bigint **const num1, intmax_t const num2) {
+    assert(num1 != NULL && *num1 != NULL);
+
+    if (si_bigint_is_NaN_or_inf(*num1)) {
+        return;
+    }
+
+    if (num2 < 0) {
+        si_bigint_sub_num_(num1, (data_type_)(-num2));
+    } else {
+        si_bigint_add_num_(num1, (data_type_)num2);
+    }
+}
+
+void si_bigint_sub_num(si_bigint **const num1, intmax_t const num2) {
+    assert(num1 != NULL && *num1 != NULL);
+
+    if (si_bigint_is_NaN_or_inf(*num1)) {
+        return;
+    }
+
+    if (num2 < 0) {
+        si_bigint_add_num_(num1, (data_type_)(-num2));
+    } else {
+        si_bigint_sub_num_(num1, (data_type_)num2);
+    }
+}
+
 /* Reverse si_bigint
  *
  *  @prama num: The si_bigint number to be reversed
  *
  * NOTE: this just for the same behavior as reversing a signed type(etc. int)
  */
-void si_bigint_not(si_bigint *const num) {
-    assert(num != NULL);
+// void si_bigint_not(si_bigint *const num) {
+//     assert(num != NULL);
 
-    if (si_bigint_is_NaN_or_inf(num)) {
-        return;
-    }
+//     if (si_bigint_is_NaN_or_inf(num)) {
+//         return;
+//     }
 
-    // TODO
-}
+//     // TODO
+// }
 
 /* Bitwise AND with a number
  */
