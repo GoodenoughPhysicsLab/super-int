@@ -479,10 +479,7 @@ bool si_bigint_eq(si_bigint const*const num1, si_bigint const*const num2) {
         return false;
     }
 
-    size_t num1_len = get_si_bigint_len_(num1);
-    size_t num2_len = get_si_bigint_len_(num2);
-
-    if (num1_len <= num2_len) {
+    if (get_si_bigint_len_(num1) <= get_si_bigint_len_(num2)) {
         return si_bigint_eq_(num1, num2);
     } else {
         return si_bigint_eq_(num2, num1);
