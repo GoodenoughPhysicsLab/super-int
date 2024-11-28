@@ -17,24 +17,13 @@ else()
     endif()
 endif()
 
-# # Fetch and build GoogleTest
-# # https://github.com/google/googletest/tree/main/googletest
-# message(STATUS "Cloning GoogleTest")
-# include(FetchContent)
-# FetchContent_Declare(
-#   googletest
-#   # Specify the commit you depend on and update it regularly.
-#   URL https://github.com/google/googletest/archive/5376968f6948923e2411081fd9372e71a59d8e77.zip
-# )
-# # For Windows: Prevent overriding the parent project's compiler/linker settings
-# set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-# FetchContent_MakeAvailable(googletest)
+include_directories(${CMAKE_SOURCE_DIR}/../include)
 
 set(TEST_SI_BIGINT "test_si_bigint")
 add_executable(
     ${TEST_SI_BIGINT}
     ${CMAKE_SOURCE_DIR}/test_si_bigint.c
-    ${CMAKE_SOURCE_DIR}/../sint/si_bigint/si_bigint.c
+    ${CMAKE_SOURCE_DIR}/../src/si_bigint.c
 )
 add_test(NAME ${TEST_SI_BIGINT} COMMAND ${CMAKE_BINARY_DIR}/${TEST_SI_BIGINT})
 
@@ -57,4 +46,3 @@ if(SINT_SIMD)
     endif()
 endif()
 
-# target_link_libraries(${CMAKE_PROJECT_NAME} gtest_main)

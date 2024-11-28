@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "si_bigint.h"
 #ifndef SI_BIGINT_NO_PRINT
     #include <stdio.h>
 #endif
+#include <si_bigint.h>
 
 #ifdef SINT_SIMD
     #if defined(__AVX2__)
@@ -113,7 +113,7 @@ si_bigint* si_bigint_new_from_multi_num_(len_type_ sign_and_len_arg, ...) {
     }
     res->data = (data_type_*)(&(res->data) + 1);
     res->len = sign_and_len_arg;
-    for (len_type_ i = 0; i != len_arg; ++i) {
+    for (size_t i = 0; i != len_arg; ++i) {
         res->data[i] = va_arg(args, data_type_);
     }
     va_end(args);

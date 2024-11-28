@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../sint/si_bigint/si_bigint.h"
+#include <si_bigint.h>
 
 #define Def_TEST(name) void Def_TEST_si_bigint_##name()
 #define Run_TEST(name)      Def_TEST_si_bigint_##name()

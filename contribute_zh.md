@@ -19,16 +19,3 @@ data指向的数组存储数字的规则就是二进制数据的存储规则。�
 
 在当前的实现中，data指向的数组的空间挨在si_bigint结构体的空间的后面。
 
-## BitInt & uBitInt
-这是一个`C++20`的，`header-only`的，不抛异常的，支持编译期的大整数库。
-与`si_bigint`不太相同的是，使用在栈上存储的静态数组进行存储数字，并且凡是支持`constexpr`的方法，都会拷贝之后返回一个新的对象。
-我会给一个例子简单说明：
-```cpp
-int main() noexcept {
-    constexpr BitInt<10> a{}; // 10bit有符号整数
-    constexpr uBitInt<10> b{}; // 10bit无符号整数
-
-    return 0;
-}
-```
-
