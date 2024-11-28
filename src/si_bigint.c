@@ -27,20 +27,43 @@
     #define UINTMAX_T_IS_32BIT
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+    #define SI_NORETURN __attribute__((noreturn))
+#elif defined(_MSC_VER)
+    #define SI_NORETURN __declspec(noreturn)
+#elif 201112L <= __STDC_VERSION__ && __STDC_VERSION__ <= 201710L
+    #define SI_NORETURN _Noreturn
+#elif __STDC_VERSION >= 202311L
+    #define SI_NORETURN [[noreturn]]
+#else
+    #define SI_NORETURN
+#endif
+
+#ifdef SI_BIGINT_NO_PRINT
+    #define Def_EXCEPTION(exception, err_msg) \
+        SI_NORETURN \
+        inline static void throw_##exception(void) { \
+            abort(); \
+        }
+#else
+    #define Def_EXCEPTION(exception, err_msg) \
+        SI_NORETURN \
+        inline static void throw_##exception(void) \
+            perror("si_bigint::" "##excepion"  ": "  err_msg "\n"); \
+            abort(); \
+        }
+#endif
+
 /* [[ Private ]]
  * throw si_bigint::BadAllocError
  */
-#if defined(__GNUC__) || defined(__clang__)
-__attribute__((noreturn))
-#elif defined(_MSC_VER)
-__declspec(noreturn)
-#endif
-inline static void throw_BadAllocError(void) {
-#ifndef SI_BIGINT_NO_PRINT
-    perror("si_bigint::BadAllocError: fail to allocate memory");
-#endif
-    abort();
-}
+Def_EXCEPTION(BadAllocError, "fail to allocate memory")
+//inline static void throw_BadAllocError(void) {
+//#ifndef SI_BIGINT_NO_PRINT
+//    perror("si_bigint::BadAllocError: fail to allocate memory");
+//#endif
+//    abort();
+//}
 
 /* [[ Private ]]
  * Get the length of a si_bigint
@@ -59,30 +82,25 @@ inline static size_t sizeof_si_bigint_(si_bigint const *num) {
 }
 
 /* [[ Private ]]
- * Reallocate memory of a si_bigint
+ * expand memory of si_bigint
  */
-static void realloc_si_bigint_(si_bigint **const num, size_t const len) {
-    assert(num != NULL && *num != NULL && len != 0);
+static void expand_memory_(si_bigint **const num, size_t const len) {
+    assert(num != NULL && *num != NULL);
 
     size_t pre_len = get_si_bigint_len_(*num);
-    if (len > pre_len) {
-        si_bigint *tmp = (si_bigint*)realloc(
-            *num, sizeof(si_bigint) + sizeof(data_type_) * len
-        );
-        if (tmp == NULL) {
-            free(*num);
-            throw_BadAllocError();
-        }
+    assert(len > pre_len);
 
-        tmp->data = (data_type_*)(&(tmp->data) + 1);
-        memset(&tmp->data[pre_len], 0, (len - pre_len) * sizeof(data_type_));
-        *num = tmp;
+    si_bigint *tmp = (si_bigint*)realloc(
+        *num, sizeof(si_bigint) + sizeof(data_type_) * len
+    );
+    if (tmp == NULL) {
+        free(*num);
+        throw_BadAllocError();
     }
-    if ((*num)->len < 0) {
-        (*num)->len = -(len_type_)len;
-    } else {
-        (*num)->len = (len_type_)len;
-    }
+
+    tmp->data = (data_type_*)&(tmp->data) + 1;
+    memset(&tmp->data[pre_len], 0, (len - pre_len) * sizeof(data_type_));
+    *num = tmp;
 }
 
 /* Create a new si_bigint from a number
@@ -232,43 +250,7 @@ void si_bigint_not(si_bigint *const num) {
         return;
     }
 
-    size_t num_len = get_si_bigint_len_(num);
-#ifdef SINT_SIMD
-    #if defined(__AVX2__)
-    for (size_t i = 0; i < num_len;
-        #if defined(UINTMAX_T_IS_64BIT)
-                i += 4
-        #elif defined(UINTMAX_T_IS_32BIT)
-                i += 8
-        #else
-            #error "your old mechine support simd?"
-        #endif
-    ) {
-        __m256i tmp = _mm256_loadu_si256((__m256i*)&num->data[i]);
-        tmp = _mm256_xor_si256(tmp, _mm256_set1_epi64x(-1));
-        _mm256_storeu_si256((__m256i*)&num->data[0], tmp);
-    }
-    #elif defined(__ARM_NEON__)
-        #if defined(UINTMAX_T_IS_64BIT)
-    for (size_t i = 0; i < num_len; i += 2) {
-        uint64x2_t tmp = vld1q_u64(&num->data[i]);
-        tmp = veorq_u64(tmp, vdupq_n_u64(-1));
-        vst1q_u64(&num->data[i], tmp);
-    }
-        #elif defined(UINTMAX_T_IS_32BIT) // ^^^ UINTMAX_T_IS_64BIT / vvv UINTMAX_T_IS_32BIT
-    for (size_t i = 0; i < num_len; i += 4) {
-        uint8x32_t tmp = vld1q_u32(&num->data[i]);
-        tmp = veorq_u32(tmp, vdupq_n_u32(-1));
-        vst1q_u32(&num->data[i], tmp);
-    }
-        #endif // UINTMAX_T_IS_32BIT
-    #endif // __ARM_NEON__
-#else // ^^^ SINT_SIMD / vvv !SINT_SIMD
-    for (size_t i = 0; i < num_len; ++i) {
-        num->data[i] = ~num->data[i];
-    }
-#endif // !SINT_SIMD
-    num->len = -num->len;
+    if (
 }
 
 /* Bitwise AND with a number
@@ -296,7 +278,7 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) {
     }
 
     size_t num2_len = get_si_bigint_len_(num2);
-    realloc_si_bigint_(num1, num2_len);
+    expand_memory_(num1, num2_len);
     if (!((*num1)->len < 0 && num2->len < 0)) {
         (*num1)->len = (*num1)->len < 0 ? -(*num1)->len : (*num1)->len;
     }
