@@ -1,7 +1,0 @@
-# bigint
-
-## description
-
-## make
-
-## develop

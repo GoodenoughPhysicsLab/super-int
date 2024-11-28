@@ -1,5 +1,7 @@
-/.vs
-/.vscode
+.vs/
+.vscode/
+build/
+Testing/
 
 /exe
 
@@ -7,8 +9,10 @@
 *.pdb
 *.exe
 *.s
+*.o
 
 *.txt
+!CMakeLists.txt
 *.lnk
 
 *.test.*

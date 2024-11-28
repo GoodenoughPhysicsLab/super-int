@@ -1,10 +1,8 @@
-# bigint
+中文 | [English](README.md)
 
-## 项目简介
-在`c`中的数字类型都是有大小限制的，而像Python中的数字是几乎没有大小限制的——是bigint，因此我决定做`bigint`。
+# super-int
 
-## 构建
+## 简介
 
-## 参与开发
-
-
+## 参与贡献
+在[contribute_zh.md](contribute_zh.md)中查看更多信息。
