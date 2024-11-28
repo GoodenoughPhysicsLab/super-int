@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -140,35 +141,35 @@ si_bigint* new_si_bigint_from_multi_num_(len_type_ sign_and_len_arg, ...) {
 
 /* Create a new si_bigint from a string
  */
-si_bigint* new_si_bigint_from_str(char const* str) {
-    assert(str != NULL);
+// si_bigint* new_si_bigint_from_str(char const* str) {
+//     assert(str != NULL);
 
-    if (strlen(str) == 0) {
-        return new_si_bigint_from_num(0);
-    }
+//     if (strlen(str) == 0) {
+//         return new_si_bigint_from_num(0);
+//     }
 
-    bool is_negative;
-    if (str[0] == '-') {
-        is_negative = true;
-        ++str;
-    } else {
-        is_negative = false;
-    }
+//     bool is_negative;
+//     if (str[0] == '-') {
+//         is_negative = true;
+//         ++str;
+//     } else {
+//         is_negative = false;
+//     }
 
-    si_bigint *res;
-    if (str[0] == '0' && str[1] == 'b') {
-        res = (si_bigint*)malloc(strlen(str) - 2);
-        // TODO
-    } else if (str[0] == '0' && str[1] == 'o') {
-        //
-    } else if (str[0] == '0' && str[1] == 'x') {
-        //
-    } else {
-        //
-    }
+//     si_bigint *res;
+//     if (str[0] == '0' && str[1] == 'b') {
+//         res = (si_bigint*)malloc(strlen(str) - 2);
+//         // TODO
+//     } else if (str[0] == '0' && str[1] == 'o') {
+//         //
+//     } else if (str[0] == '0' && str[1] == 'x') {
+//         //
+//     } else {
+//         //
+//     }
 
-    return res;
-}
+//     return res;
+// }
 
 /* Create a new si_bigint from a si_bigint
  */
@@ -300,7 +301,7 @@ static void si_bigint_add_num_(si_bigint **const num1, data_type_ const num2) {
 
     (*num1)->data[0] += num2;
 
-    for (int i = 1; i < get_si_bigint_len_(*num1); ++i) {
+    for (size_t i = 1; i < get_si_bigint_len_(*num1); ++i) {
         bool is_overflow_ = is_overflow;
 
         if ((*num1)->data[i] > UINTMAX_MAX - 1) {
@@ -445,6 +446,47 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) { // TODO
         (*num1)->data[i] &= num2->data[i];
     }
 #endif // !SINT_SIMD
+}
+
+static bool si_bigint_eq_(si_bigint const*const num1, si_bigint const*const num2) {
+    assert(num1 != NULL && num2 != NULL);
+
+    if (num1->len > 0 && num2->len < 0 || num1->len < 0 && num2->len > 0) {
+        return false;
+    }
+
+    size_t num1_len = get_si_bigint_len_(num1);
+    size_t num2_len = get_si_bigint_len_(num2);
+    assert(num1_len <= num2_len);
+
+    if (memcmp(num1->data, num2->data, num1_len * sizeof(data_type_)) != 0) {
+        return false;
+    }
+    for (size_t i = num1_len; i < num2_len; ++i) {
+        if (num2->data[i] != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/* Compare two si_bigint
+ */
+bool si_bigint_eq(si_bigint const*const num1, si_bigint const*const num2) {
+    assert(num1 != NULL && num2 != NULL);
+
+    if (si_bigint_is_NaN_or_inf(num1) || si_bigint_is_NaN_or_inf(num2)) {
+        return false;
+    }
+
+    size_t num1_len = get_si_bigint_len_(num1);
+    size_t num2_len = get_si_bigint_len_(num2);
+
+    if (num1_len <= num2_len) {
+        return si_bigint_eq_(num1, num2);
+    } else {
+        return si_bigint_eq_(num2, num1);
+    }
 }
 
 /* Compare a si_bigint with a number

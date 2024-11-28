@@ -17,8 +17,8 @@ Def_TEST(eq) {
     assert(!si_bigint_eq_num(a, 2));
     assert(si_bigint_eq_num(c, -1));
     assert(!si_bigint_eq_num(c, -2));
-    // assert(si_bigint_eq(a, b));
-    // assert(!si_bigint_eq(a, c));
+    assert(si_bigint_eq(a, b));
+    assert(!si_bigint_eq(a, c));
 
     del_si_bigint(a);
     del_si_bigint(b);
