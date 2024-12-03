@@ -61,7 +61,7 @@ void si_bigint_or_num(si_bigint *const, intmax_t const);
 void si_bigint_xor(si_bigint **const, si_bigint const*const);
 void si_bigint_xor_num(si_bigint *const, intmax_t const);
 
-bool si_bigint_eq(si_bigint const*const, si_bigint const*const);
+bool si_bigint_eq(si_bigint const*const restrict, si_bigint const*const restrict);
 bool si_bigint_eq_num(si_bigint const*const, intmax_t const);
 bool si_bigint_lt(si_bigint const*const, si_bigint const*const);
 bool si_bigint_lt_num(si_bigint const*const, intmax_t const);

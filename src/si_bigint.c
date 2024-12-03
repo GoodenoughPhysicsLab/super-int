@@ -448,8 +448,8 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) { // TODO
 #endif // !SINT_SIMD
 }
 
-static bool si_bigint_eq_(si_bigint const*const num1, si_bigint const*const num2) {
-    assert(num1 != NULL && num2 != NULL);
+static bool si_bigint_eq_(si_bigint const*const restrict num1, si_bigint const*const restrict num2) {
+    assert(num1 != NULL && num2 != NULL && num1 != num2);
 
     if (num1->len > 0 && num2->len < 0 || num1->len < 0 && num2->len > 0) {
         return false;
@@ -472,8 +472,8 @@ static bool si_bigint_eq_(si_bigint const*const num1, si_bigint const*const num2
 
 /* Compare two si_bigint
  */
-bool si_bigint_eq(si_bigint const*const num1, si_bigint const*const num2) {
-    assert(num1 != NULL && num2 != NULL);
+bool si_bigint_eq(si_bigint const*const restrict num1, si_bigint const*const restrict num2) {
+    assert(num1 != NULL && num2 != NULL && num1 != num2);
 
     if (si_bigint_is_NaN_or_inf(num1) || si_bigint_is_NaN_or_inf(num2)) {
         return false;
