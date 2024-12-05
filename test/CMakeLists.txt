@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.15)
 
 project(test_sint C)
-set(CAMKE_C_STANDARD 99)
+if (MSVC)
+    add_compile_options(/std:c11)
+else()
+    set(CAMKE_C_STANDARD 99)
+endif()
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
 enable_testing()

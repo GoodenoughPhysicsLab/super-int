@@ -1,3 +1,7 @@
+#if __STDC_VERSION__ < 199901L
+    #error "C99 or later is required"
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -30,15 +34,21 @@
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-    #define SI_NORETURN __attribute__((noreturn))
+    #define SI_noreturn __attribute__((noreturn))
 #elif defined(_MSC_VER)
-    #define SI_NORETURN __declspec(noreturn)
+    #define SI_noreturn __declspec(noreturn)
 #elif 201112L <= __STDC_VERSION__ && __STDC_VERSION__ <= 201710L
-    #define SI_NORETURN _Noreturn
+    #define SI_noreturn _Noreturn
 #elif __STDC_VERSION >= 202311L
-    #define SI_NORETURN [[noreturn]]
+    #define SI_noreturn [[noreturn]]
 #else
-    #define SI_NORETURN
+    #define SI_noreturn
+#endif
+
+#define SI_private static inline
+
+#ifndef SI_export
+    #define SI_export
 #endif
 
 #ifdef SI_BIGINT_NO_PRINT
@@ -51,93 +61,68 @@
         } while(0)
 #endif
 
-
 #define Def_EXCEPTION(exception, err_msg) \
-    SI_NORETURN \
-    inline static void throw_##exception(void) { \
+    SI_noreturn SI_private \
+    void throw_##exception(void) { \
         SI_throw(exception, err_msg); \
     }
 
-/* [[ Private ]]
- * si_bigint::BadAllocError
+/* si_bigint::BadAllocError
  */
 Def_EXCEPTION(BadAllocError, "failed to allocate memory")
 
-/* [[ Private ]]
- * Get the length of a si_bigint
+/* Get the length of a si_bigint
  */
-inline static size_t get_si_bigint_len_(si_bigint const*const num) {
+SI_private
+size_t get_si_bigint_len_(si_bigint const*const num) {
     assert(num != NULL);
     return (size_t)(num->len < 0 ? -num->len : num->len);
 }
 
-/* [[ Private ]]
- * Calculate the size of a si_bigint
+/* Calculate the size of a si_bigint
  */
-inline static size_t sizeof_si_bigint_(si_bigint const *num) {
+SI_private
+size_t sizeof_si_bigint_(si_bigint const *num) {
     assert(num != NULL);
-    return sizeof(si_bigint) + get_si_bigint_len_(num) * sizeof(data_type_);
+    return sizeof(si_bigint) + get_si_bigint_len_(num) * sizeof(si_data_type);
 }
 
-/* [[ Private ]]
- * expand memory of si_bigint
+/* expand memory of si_bigint
  */
-static void expand_memory_(si_bigint **const num, size_t const len) {
+SI_private
+void expand_memory_(si_bigint **const num, size_t const len) {
     assert(num != NULL && *num != NULL);
 
     size_t pre_len = get_si_bigint_len_(*num);
     assert(len > pre_len);
 
     si_bigint *tmp = (si_bigint*)realloc(
-        *num, sizeof(si_bigint) + sizeof(data_type_) * len
+        *num, sizeof(si_bigint) + sizeof(si_data_type) * len
     );
     if (tmp == NULL) {
         free(*num);
         throw_BadAllocError();
     }
 
-    tmp->data = (data_type_*)&(tmp->data) + 1;
-    memset(&tmp->data[pre_len], 0, (len - pre_len) * sizeof(data_type_));
+    tmp->data = (si_data_type*)&(tmp->data) + 1;
+    memset(&tmp->data[pre_len], 0, (len - pre_len) * sizeof(si_data_type));
     tmp->len = (*num)->len < 0 ? -len : len;
     *num = tmp;
 }
 
 /* Create a new si_bigint from a number
  */
+SI_export
 si_bigint* new_si_bigint_from_num(intmax_t const num) {
-    si_bigint *res = (si_bigint*)malloc(sizeof(si_bigint) + sizeof(data_type_));
+    si_bigint *res = (si_bigint*)malloc(sizeof(si_bigint) + sizeof(si_data_type));
     if (res == NULL) {
         throw_BadAllocError();
     }
     res->len = num < 0 ? -1 : 1;
-    res->data = (data_type_*)(&(res->data) + 1);
-    res->data[0] = (data_type_)(num < 0 ? -num : num);
+    res->data = (si_data_type*)(&(res->data) + 1);
+    res->data[0] = (si_data_type)(num < 0 ? -num : num);
     return res;
 }
-
-#ifndef NDEBUG
-#include <stdarg.h>
-/* Create a new si_bigint from a multi-number
- */
-si_bigint* new_si_bigint_from_multi_num_(len_type_ sign_and_len_arg, ...) {
-    va_list args;
-    va_start(args, sign_and_len_arg);
-
-    size_t len_arg = (size_t)(sign_and_len_arg < 0 ? -sign_and_len_arg : sign_and_len_arg);
-    si_bigint *res = (si_bigint*)malloc(sizeof(si_bigint) + len_arg * sizeof(data_type_));
-    if (res == NULL) {
-        throw_BadAllocError();
-    }
-    res->data = (data_type_*)(&(res->data) + 1);
-    res->len = sign_and_len_arg;
-    for (size_t i = 0; i != len_arg; ++i) {
-        res->data[i] = va_arg(args, data_type_);
-    }
-    va_end(args);
-
-    return res;
-}
-#endif // NDEBUG
 
 /* Create a new si_bigint from a string
  */
@@ -173,6 +158,7 @@ si_bigint* new_si_bigint_from_multi_num_(len_type_ sign_and_len_arg, ...) {
 
 /* Create a new si_bigint from a si_bigint
  */
+SI_export
 si_bigint* new_si_bigint_from_si_bigint(si_bigint const*const num) {
     assert(num != NULL);
 
@@ -180,13 +166,14 @@ si_bigint* new_si_bigint_from_si_bigint(si_bigint const*const num) {
     if (res == NULL) {
         throw_BadAllocError();
     }
-    res->data = (data_type_*)(&(res->data) + 1);
+    res->data = (si_data_type*)(&(res->data) + 1);
     memcpy(res, num, sizeof_si_bigint_(num));
     return res;
 }
 
 /* Free memory of si_bigint
  */
+SI_export
 void del_si_bigint(si_bigint *num) {
     assert(num != NULL);
 
@@ -195,28 +182,29 @@ void del_si_bigint(si_bigint *num) {
 
 /* Return true if a si_bigint is NaN
  */
+SI_export
 bool si_bigint_is_NaN(si_bigint const*const num) {
     return num->len == 0;
 }
 
 /* Return true if a si_bigint is infinity
  */
+SI_export
 bool si_bigint_is_inf(si_bigint const*const num) {
     return num->data == NULL && num->len != 0;
 }
 
-/* [[ Private ]]
- * Return true if a si_bigint is NaN or infinity
+/* Return true if a si_bigint is NaN or infinity
  */
-inline static bool si_bigint_is_NaN_or_inf(si_bigint const*const num) {
+SI_private
+bool si_bigint_is_NaN_or_inf(si_bigint const*const num) {
     return si_bigint_is_NaN(num) || si_bigint_is_inf(num);
 }
 
-/* [[ Private ]]
- *
- * if num < 0, then two's complement
+/* if num < 0, then two's complement
  */
-static void twos_complement_(si_bigint *const num) {
+SI_private
+void twos_complement_(si_bigint *const num) {
     assert(num != NULL && num->len < 0 && !si_bigint_is_inf(num));
 
     size_t num_len = get_si_bigint_len_(num);
@@ -259,6 +247,7 @@ static void twos_complement_(si_bigint *const num) {
     num->len = -num->len;
 }
 
+SI_export
 void si_bigint_to_bcd(si_bigint **const num) {
     assert(num != NULL && *num != NULL);
 
@@ -279,17 +268,17 @@ void si_bigint_to_bcd(si_bigint **const num) {
 
 /* absolute value of itself
  */
+SI_export
 void si_bigint_abs(si_bigint *const num) {
     assert(num != NULL);
 
-    num->len = (len_type_)get_si_bigint_len_(num);
+    num->len = (si_len_type)get_si_bigint_len_(num);
 }
 
-/* [[ Private ]]
- *
- * num1 += num2
+/* num1 += num2
  */
-static void si_bigint_add_num_(si_bigint **const num1, data_type_ const num2) {
+SI_private
+void si_bigint_add_num_(si_bigint **const num1, si_data_type const num2) {
     assert(num1 != NULL && *num1 != NULL);
 
     bool is_overflow;
@@ -321,16 +310,16 @@ static void si_bigint_add_num_(si_bigint **const num1, data_type_ const num2) {
     }
 }
 
-/* [[ Private ]]
- *
- * num1 -= num2
+/* num1 -= num2
  */
-static void si_bigint_sub_num_(si_bigint **const num1, data_type_ const num2) {
+SI_private
+void si_bigint_sub_num_(si_bigint **const num1, si_data_type const num2) {
 
 }
 
 /* Add a number to a si_bigint
  */
+SI_export
 void si_bigint_add_num(si_bigint **const num1, intmax_t const num2) {
     assert(num1 != NULL && *num1 != NULL);
 
@@ -339,12 +328,13 @@ void si_bigint_add_num(si_bigint **const num1, intmax_t const num2) {
     }
 
     if (num2 < 0) {
-        si_bigint_sub_num_(num1, (data_type_)(-num2));
+        si_bigint_sub_num_(num1, (si_data_type)(-num2));
     } else {
-        si_bigint_add_num_(num1, (data_type_)num2);
+        si_bigint_add_num_(num1, (si_data_type)num2);
     }
 }
 
+SI_export
 void si_bigint_sub_num(si_bigint **const num1, intmax_t const num2) {
     assert(num1 != NULL && *num1 != NULL);
 
@@ -353,9 +343,9 @@ void si_bigint_sub_num(si_bigint **const num1, intmax_t const num2) {
     }
 
     if (num2 < 0) {
-        si_bigint_add_num_(num1, (data_type_)(-num2));
+        si_bigint_add_num_(num1, (si_data_type)(-num2));
     } else {
-        si_bigint_sub_num_(num1, (data_type_)num2);
+        si_bigint_sub_num_(num1, (si_data_type)num2);
     }
 }
 
@@ -377,6 +367,7 @@ void si_bigint_sub_num(si_bigint **const num1, intmax_t const num2) {
 
 /* Bitwise AND with a number
  */
+SI_export
 void si_bigint_and_num(si_bigint *const num1, intmax_t const num2) {
     assert(num1 != NULL);
 
@@ -392,6 +383,7 @@ void si_bigint_and_num(si_bigint *const num1, intmax_t const num2) {
 
 /* Bitwise AND with another si_bigint
  */
+SI_export
 void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) { // TODO: -128 & -127
     assert(num1 != NULL && *num1 != NULL && num2 != NULL);
 
@@ -448,7 +440,8 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) { // TODO
 #endif // !SINT_SIMD
 }
 
-static bool si_bigint_eq_(si_bigint const*const restrict num1, si_bigint const*const restrict num2) {
+SI_private
+bool si_bigint_eq_(si_bigint const*const restrict num1, si_bigint const*const restrict num2) {
     assert(num1 != NULL && num2 != NULL && num1 != num2);
 
     if (num1->len > 0 && num2->len < 0 || num1->len < 0 && num2->len > 0) {
@@ -459,7 +452,7 @@ static bool si_bigint_eq_(si_bigint const*const restrict num1, si_bigint const*c
     size_t num2_len = get_si_bigint_len_(num2);
     assert(num1_len <= num2_len);
 
-    if (memcmp(num1->data, num2->data, num1_len * sizeof(data_type_)) != 0) {
+    if (memcmp(num1->data, num2->data, num1_len * sizeof(si_data_type)) != 0) {
         return false;
     }
     for (size_t i = num1_len; i < num2_len; ++i) {
@@ -472,6 +465,7 @@ static bool si_bigint_eq_(si_bigint const*const restrict num1, si_bigint const*c
 
 /* Compare two si_bigint
  */
+SI_export
 bool si_bigint_eq(si_bigint const*const restrict num1, si_bigint const*const restrict num2) {
     assert(num1 != NULL && num2 != NULL && num1 != num2);
 
@@ -488,12 +482,13 @@ bool si_bigint_eq(si_bigint const*const restrict num1, si_bigint const*const res
 
 /* Compare a si_bigint with a number
  */
+SI_export
 bool si_bigint_eq_num(si_bigint const*const num1, intmax_t const num2) {
     assert(num1 != NULL);
 
     if (si_bigint_is_NaN_or_inf(num1)
         || num2 < 0 && num1->len > 0 || num2 >= 0 && num1->len < 0
-        || num1->data[0] != (data_type_)(num2 < 0 ? -num2 : num2))
+        || num1->data[0] != (si_data_type)(num2 < 0 ? -num2 : num2))
     {
         return false;
     }

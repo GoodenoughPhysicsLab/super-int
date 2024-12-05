@@ -7,8 +7,8 @@
 extern "C" {
 #endif // __cplusplus
 
-typedef intmax_t len_type_;
-typedef uintmax_t data_type_;
+typedef intmax_t si_len_type;
+typedef uintmax_t si_data_type;
 
 typedef struct si_bigint {
     /* if si_bigint is negative, len < 0, else len > 0
@@ -18,14 +18,11 @@ typedef struct si_bigint {
      * if (data == NULL and len != 0) => si_bigint is inf
      * -> len > 0 : +inf, else means -inf
      */
-    len_type_ len;
-    data_type_* data;
+    si_len_type len;
+    si_data_type* data;
 } si_bigint;
 
 si_bigint* new_si_bigint_from_num(intmax_t const);
-#ifndef NDEBUG
-si_bigint* new_si_bigint_from_multi_num_(len_type_, ...);
-#endif
 si_bigint* new_si_bigint_from_str(char const*);
 si_bigint* new_si_bigint_from_si_bigint(si_bigint const*const);
 void del_si_bigint(si_bigint *);
