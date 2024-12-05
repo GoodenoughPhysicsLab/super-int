@@ -15,23 +15,23 @@ jobs:
 
     - name: Build tests
       run: |
-        cmake -S test -B build -Wno-dev
-        cmake --build build --config Debug
+        cmake -S test -B build-test -Wno-dev
+        cmake --build build-test --config Debug
 
     - name: Run tests
       run: |
-        cd build
+        cd build-test
         ctest -C Debug
 
     - name: test output
       if: failure() && matrix.os == 'windows-latest'
       run: |
-        type build\Testing\Temporary\LastTest.log
+        type build-test\Testing\Temporary\LastTest.log
 
     - name: test output
       if: failure() && matrix.os != 'windows-latest'
       run: |
-        cat build/Testing/Temporary/LastTest.log
+        cat build-test/Testing/Temporary/LastTest.log
 
   test_with_simd:
     name: ${{ matrix.os }}(simd)
@@ -45,20 +45,35 @@ jobs:
 
     - name: Build simd tests
       run: |
-        cmake -S test -B build -Wno-dev -DSINT_SIMD=ON
-        cmake --build build --config Debug
+        cmake -S test -B build-test -Wno-dev -DSINT_SIMD=ON
+        cmake --build build-test --config Debug
 
     - name: Run simd tests
       run: |
-        cd build
+        cd build-test
         ctest -C Debug
 
     - name: test output
       if: failure() && matrix.os == 'windows-latest'
       run: |
-        type build\Testing\Temporary\LastTest.log
+        type build-test\Testing\Temporary\LastTest.log
 
     - name: test output
       if: failure() && matrix.os != 'windows-latest'
       run: |
-        cat build/Testing/Temporary/LastTest.log
+        cat build-test/Testing/Temporary/LastTest.log
+
+  build_lib:
+    name: ${{ matrix.os }}(lib)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-13, macos-14]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build lib
+        run: |
+          cmake -S . -B build-lib -Wno-dev
+          cmake --build build-lib --config Release

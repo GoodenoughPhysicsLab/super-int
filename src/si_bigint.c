@@ -13,6 +13,8 @@
 #endif
 #include <si_bigint.h>
 
+#define SI_private static inline
+
 #ifdef SINT_SIMD
     #if defined(__AVX2__)
         #ifdef _WIN32
@@ -43,12 +45,6 @@
     #define SI_noreturn [[noreturn]]
 #else
     #define SI_noreturn
-#endif
-
-#define SI_private static inline
-
-#ifndef SI_export
-    #define SI_export
 #endif
 
 #ifdef SI_BIGINT_NO_PRINT

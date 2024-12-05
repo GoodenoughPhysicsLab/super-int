@@ -6,7 +6,7 @@ if (MSVC)
 else()
     set(CAMKE_C_STANDARD 99)
 endif()
-set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD_REQUIRED True)
 set(CMAKE_BUILD_TYPE Debug)
 enable_testing()
 
