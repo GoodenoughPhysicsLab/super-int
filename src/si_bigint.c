@@ -31,6 +31,8 @@
     #define UINTMAX_T_IS_32BIT
 #endif
 
+#define SI_DATA_MAX UINTMAX_MAX
+
 #if defined(__GNUC__) || defined(__clang__)
     #define SI_noreturn __attribute__((noreturn))
 #elif defined(_MSC_VER)
@@ -79,6 +81,12 @@ size_t sizeof_si_bigint_(si_bigint const* num) {
     return sizeof(si_bigint) + get_si_bigint_len_(num) * sizeof(si_data_type);
 }
 
+SI_private
+bool less_than_zero_(si_bigint const*const num) {
+    assert(num != NULL);
+    return num->len < 0;
+}
+
 /* expand memory of si_bigint
  */
 SI_private
@@ -102,11 +110,23 @@ void expand_memory_(si_bigint **const num, size_t const len) {
     *num = tmp;
 }
 
+SI_private
+void assign_NaN_(si_bigint *const num) {
+    assert(num != NULL);
+    num->len = 0;
+}
+
+SI_private
+void assign_inf_(si_bigint *const num, bool const is_positive) {
+    assert(num != NULL);
+    num->len = is_positive ? 1 : -1;
+    num->data = NULL;
+}
 
 /* Return true if a si_bigint is NaN
  */
 SI_private
-bool si_bigint_is_NaN_(si_bigint const*const num) {
+bool is_NaN_(si_bigint const*const num) {
     assert(num != NULL);
     return num->len == 0;
 }
@@ -114,7 +134,7 @@ bool si_bigint_is_NaN_(si_bigint const*const num) {
 /* Return true if a si_bigint is infinity
  */
 SI_private
-bool si_bigint_is_inf_(si_bigint const*const num) {
+bool is_inf_(si_bigint const*const num) {
     assert(num != NULL);
     return num->data == NULL && num->len != 0;
 }
@@ -123,7 +143,7 @@ bool si_bigint_is_inf_(si_bigint const*const num) {
  */
 SI_private
 bool si_bigint_is_NaN_or_inf_(si_bigint const*const num) {
-    return si_bigint_is_NaN_(num) || si_bigint_is_inf_(num);
+    return is_NaN_(num) || is_inf_(num);
 }
 
 SI_private
@@ -238,18 +258,36 @@ void del_si_bigint(si_bigint *num) {
     free(num);
 }
 
+/* Assign a si_bigint to NaN
+ */
+SI_export
+void si_bigint_assign_NaN(si_bigint *const num) {
+    assert(num != NULL);
+    assign_NaN_(num);
+}
+
+/* Assign a si_bigint to infinity
+ *
+ * @param is_positive: true if +inf, else -inf
+ */
+SI_export
+void si_bigint_assign_inf(si_bigint *const num, bool const is_positive) {
+    assert(num != NULL);
+    assign_inf_(num, is_positive);
+}
+
 /* Return true if a si_bigint is NaN
  */
 SI_export
 bool si_bigint_is_NaN(si_bigint const*const num) {
-    return si_bigint_is_NaN_(num);
+    return is_NaN_(num);
 }
 
 /* Return true if a si_bigint is infinity
  */
 SI_export
 bool si_bigint_is_inf(si_bigint const*const num) {
-    return si_bigint_is_inf_(num);
+    return is_inf_(num);
 }
 
 SI_export
@@ -280,10 +318,10 @@ void si_bigint_abs(si_bigint *const num) {
     num->len = (si_len_type)get_si_bigint_len_(num);
 }
 
-/* num1 += num2
+/* (*num1)->data += num2
  */
 SI_private
-void si_bigint_add_num_(si_bigint **const num1, si_data_type const num2) {
+void data_add_num_(si_bigint **const num1, si_data_type const num2) {
     assert(num1 != NULL && *num1 != NULL);
 
     bool is_overflow;
@@ -315,16 +353,47 @@ void si_bigint_add_num_(si_bigint **const num1, si_data_type const num2) {
     }
 }
 
-/* num1 -= num2
+/* borrow from the higher place value
+ */
+
+/* (*num1)->data -= num2
+ * When the meiosis is smaller than the meiosis, reverse the sign bit
  */
 SI_private
-void si_bigint_sub_num_(si_bigint **const num1, si_data_type const num2) {
-    assert(num1 != NULL && *num1 != NULL);
+void data_sub_num_(si_bigint *const num1, si_data_type const num2) {
+    assert(num1 != NULL);
+    assert(!si_bigint_is_NaN_or_inf_(num1));
 
-    if (si_bigint_is_NaN_or_inf_(*num1)) {
+    if( num1->data[0] >= num2) {
+        num1->data[0] -= num2;
+        return;
+    } else {
+        num1->data[0] = SI_DATA_MAX - num2 + 1;
+
+        size_t num1_len = get_si_bigint_len_(num1);
+        size_t i = 1;
+
+        for (; i < num1_len; ++i) {
+            if (num1->data[1] != 0) {
+                goto success_borrowed;
+            }
+        }
+
+        num1->len = -num1->len;
+        return;
+
+success_borrowed:
+        for (i = 1; i < num1_len; ++i) {
+            if (num1->data[i] == 0) {
+                num1->data[i] = SI_DATA_MAX;
+                num1->data[i + 1] -= 1;
+            } else {
+                num1->data[i] -= 1;
+                break;
+            }
+        }
         return;
     }
-
 }
 
 /* Add a number to a si_bigint
@@ -337,10 +406,18 @@ void si_bigint_add_num(si_bigint **const num1, intmax_t const num2) {
         return;
     }
 
-    if (num2 < 0) {
-        si_bigint_sub_num_(num1, (si_data_type)(-num2));
+    if (less_than_zero_(*num1)) {
+        if (num2 < 0) {
+            data_add_num_(num1, (si_data_type)(-num2));
+        } else {
+            data_sub_num_(*num1, (si_data_type)num2);
+        }
     } else {
-        si_bigint_add_num_(num1, (si_data_type)num2);
+        if (num2 < 0) {
+            data_sub_num_(*num1, (si_data_type)(-num2));
+        } else {
+            data_add_num_(num1, (si_data_type)num2);
+        }
     }
 }
 
@@ -352,16 +429,24 @@ void si_bigint_sub_num(si_bigint **const num1, intmax_t const num2) {
         return;
     }
 
-    if (num2 < 0) {
-        si_bigint_add_num_(num1, (si_data_type)(-num2));
+    if (less_than_zero_(*num1)) {
+        if (num2 < 0) {
+            data_sub_num_(*num1, (si_data_type)(-num2));
+        } else {
+            data_add_num_(num1, (si_data_type)num2);
+        }
     } else {
-        si_bigint_sub_num_(num1, (si_data_type)num2);
+        if (num2 < 0) {
+            data_add_num_(num1, (si_data_type)(-num2));
+        } else {
+            data_sub_num_(*num1, (si_data_type)num2);
+        }
     }
 }
 
 /* Reverse si_bigint
  *
- *  @prama num: The si_bigint number to be reversed
+ *  @param num: The si_bigint number to be reversed
  *
  * NOTE: this just for the same behavior as reversing a signed type(etc. int)
  */
@@ -456,10 +541,10 @@ void si_bigint_and(si_bigint **const num1, si_bigint const*const num2) { // TODO
 SI_export
 void si_bigint_twos_complement(si_bigint **const num) {
     assert(num != NULL && *num != NULL);
-    assert((*num)->len < 0 && !si_bigint_is_inf_(*num));
+    assert((*num)->len < 0 && !is_inf_(*num));
 
     bitwise_not_data_(*num);
-    si_bigint_add_num(num, 1);
+    data_add_num_(num, 1);
     (*num)->len = -(*num)->len;
 }
 

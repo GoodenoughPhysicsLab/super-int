@@ -7,7 +7,7 @@
 extern "C" {
 #endif // __cplusplus
 
-// This macro is API
+// This macro is a part of API
 #ifndef SI_export
     #define SI_export
 #endif
@@ -31,6 +31,12 @@ SI_export si_bigint* new_si_bigint_from_num(intmax_t const);
 SI_export si_bigint* new_si_bigint_from_str(char const*);
 SI_export si_bigint* new_si_bigint_from_si_bigint(si_bigint const*const);
 SI_export void del_si_bigint(si_bigint *);
+
+SI_export void si_bigint_assign_from_num(si_bigint *const, intmax_t const);
+SI_export void si_bigint_assign_from_str(si_bigint *const, char const*const);
+SI_export void si_bigint_assign_NaN(si_bigint *const);
+SI_export void si_bigint_assign_inf(si_bigint *const, bool const);
+
 SI_export bool si_bigint_is_NaN(si_bigint const*const);
 SI_export bool si_bigint_is_inf(si_bigint const*const);
 SI_export void si_bigint_to_bcd(si_bigint **const);
