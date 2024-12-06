@@ -22,7 +22,6 @@ else()
 endif()
 
 if(SINT_SIMD)
-    add_compile_definitions(SINT_SIMD)
     if (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86"
         OR CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64"
         OR CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64")

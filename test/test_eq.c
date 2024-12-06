@@ -14,6 +14,7 @@ int main(void) {
 
     del_si_bigint(a);
     del_si_bigint(b);
+    del_si_bigint(c);
 
     return 0;
 }
