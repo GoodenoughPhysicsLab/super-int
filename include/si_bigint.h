@@ -62,6 +62,7 @@ SI_export void si_bigint_or(si_bigint **const, si_bigint const*const);
 SI_export void si_bigint_or_num(si_bigint *const, intmax_t const);
 SI_export void si_bigint_xor(si_bigint **const, si_bigint const*const);
 SI_export void si_bigint_xor_num(si_bigint *const, intmax_t const);
+SI_export void si_bigint_twos_complement(si_bigint **const);
 
 SI_export bool si_bigint_eq(si_bigint const*const restrict, si_bigint const*const restrict);
 SI_export bool si_bigint_eq_num(si_bigint const*const, intmax_t const);
