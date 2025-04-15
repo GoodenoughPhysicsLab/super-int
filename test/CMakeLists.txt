@@ -13,7 +13,7 @@ enable_testing()
 option(SINT_SIMD "Enable SINT_SIMD support" OFF)
 
 if (MSVC)
-    add_compile_options(/Zc:preprocessor /utf-8 /DNOMINMAX /D_USE_MATH_DEFINES /bigobj)
+    add_compile_options(/Zc:preprocessor /utf-8 /DNOMINMAX /bigobj)
 else()
     add_compile_options(-Wall -Wextra -Wno-parentheses)
     if (WIN32)

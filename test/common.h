@@ -19,7 +19,7 @@ si_bigint* new_si_bigint_from_multi_num_(si_len_type sign_and_len_arg, ...) {
     size_t len_arg = (size_t)(sign_and_len_arg < 0 ? -sign_and_len_arg : sign_and_len_arg);
     si_bigint *res = (si_bigint*)malloc(sizeof(si_bigint) + len_arg * sizeof(si_data_type));
     if (res == NULL) {
-        perror("test::BadAllocError");
+        fprintf(stderr, "test::BadAllocError");
         abort();
     }
     res->data = (si_data_type*)(&(res->data) + 1);

@@ -1,6 +1,14 @@
 #pragma once
 
-#include <stdint.h>
+/**
+ * @file si_bigint.h
+ * @brief You have included the header file for sint
+ */
+#ifndef SUPER_INT
+    #define SUPER_INT
+#endif // SUPER_INT
+
+#include <stddef.h>
 #include <stdbool.h>
 
 #ifdef __cplusplus
@@ -12,8 +20,8 @@ extern "C" {
     #define SI_export
 #endif
 
-typedef intmax_t si_len_type;
-typedef uintmax_t si_data_type;
+typedef ptrdiff_t si_len_type;
+typedef size_t si_data_type;
 
 typedef struct si_bigint {
     /* if si_bigint is negative, len < 0, else len > 0
@@ -27,55 +35,55 @@ typedef struct si_bigint {
     si_data_type* data;
 } si_bigint;
 
-SI_export si_bigint* new_si_bigint_from_num(intmax_t const);
-SI_export si_bigint* new_si_bigint_from_str(char const*);
-SI_export si_bigint* new_si_bigint_from_si_bigint(si_bigint const*const);
-SI_export void del_si_bigint(si_bigint *);
+SI_export si_bigint* new_si_bigint_from_num(ptrdiff_t const);
+SI_export si_bigint* new_si_bigint_from_str(char const*const);
+SI_export si_bigint* new_si_bigint_from_si_bigint(si_bigint const* const);
+SI_export void del_si_bigint(si_bigint*);
 
-SI_export void si_bigint_assign_from_num(si_bigint *const, intmax_t const);
-SI_export void si_bigint_assign_from_str(si_bigint *const, char const*const);
-SI_export void si_bigint_assign_NaN(si_bigint *const);
-SI_export void si_bigint_assign_inf(si_bigint *const, bool const);
+SI_export void si_bigint_assign_from_num(si_bigint* const, ptrdiff_t const);
+SI_export void si_bigint_assign_from_str(si_bigint* const, char const* const);
+SI_export void si_bigint_assign_NaN(si_bigint* const);
+SI_export void si_bigint_assign_inf(si_bigint* const, bool const);
 
-SI_export bool si_bigint_is_NaN(si_bigint const*const);
-SI_export bool si_bigint_is_inf(si_bigint const*const);
-SI_export void si_bigint_to_bcd(si_bigint **const);
+SI_export bool si_bigint_is_NaN(si_bigint const* const);
+SI_export bool si_bigint_is_inf(si_bigint const* const);
+SI_export void si_bigint_to_bcd(si_bigint** const);
 #ifndef SI_BIGINT_NO_PRINT
-SI_export void si_bigint_print(si_bigint const*const);
+SI_export void si_bigint_print(si_bigint const* const);
 #endif
-SI_export void si_bigint_abs(si_bigint *const);
+SI_export void si_bigint_abs(si_bigint* const);
 
 // TODO: support double, and how to tackle negative numbers
-SI_export void si_bigint_add(si_bigint **const, si_bigint const*const);
-SI_export void si_bigint_add_num(si_bigint **const, intmax_t const);
-SI_export void si_bigint_sub(si_bigint **const, si_bigint const*const);
-SI_export void si_bigint_sub_num(si_bigint **const, intmax_t const);
-SI_export void si_bigint_mul(si_bigint **const, si_bigint const*const);
-SI_export void si_bigint_mul_num(si_bigint **const, intmax_t const);
-SI_export void si_bigint_div(si_bigint **const, si_bigint const*const, double *);
-SI_export void si_bigint_div_num(si_bigint **const, intmax_t const, double *);
-SI_export void si_bigint_mod(si_bigint **const, si_bigint const*const, uintmax_t *);
-SI_export void si_bigint_mod_num(si_bigint **const, intmax_t const, uintmax_t *);
-SI_export void si_bigint_pow(si_bigint **const, si_bigint const*const);
-SI_export void si_bigint_pow_num(si_bigint **const, intmax_t const);
+SI_export void si_bigint_add(si_bigint** const, si_bigint const* const);
+SI_export void si_bigint_add_num(si_bigint** const, ptrdiff_t const);
+SI_export void si_bigint_sub(si_bigint** const, si_bigint const* const);
+SI_export void si_bigint_sub_num(si_bigint** const, ptrdiff_t const);
+SI_export void si_bigint_mul(si_bigint** const, si_bigint const* const);
+SI_export void si_bigint_mul_num(si_bigint** const, ptrdiff_t const);
+SI_export void si_bigint_div(si_bigint** const, si_bigint const* const, double*);
+SI_export void si_bigint_div_num(si_bigint** const, ptrdiff_t const, double*);
+SI_export void si_bigint_mod(si_bigint** const, si_bigint const* const, size_t*);
+SI_export void si_bigint_mod_num(si_bigint** const, ptrdiff_t const, size_t*);
+SI_export void si_bigint_pow(si_bigint** const, si_bigint const* const);
+SI_export void si_bigint_pow_num(si_bigint** const, ptrdiff_t const);
 
-SI_export void si_bigint_shl(si_bigint **const);
-SI_export void si_bigint_shr(si_bigint *const);
-SI_export void si_bigint_not(si_bigint *const);
-SI_export void si_bigint_and(si_bigint **const, si_bigint const*const);
-SI_export void si_bigint_and_num(si_bigint *const, intmax_t const);
-SI_export void si_bigint_or(si_bigint **const, si_bigint const*const);
-SI_export void si_bigint_or_num(si_bigint *const, intmax_t const);
-SI_export void si_bigint_xor(si_bigint **const, si_bigint const*const);
-SI_export void si_bigint_xor_num(si_bigint *const, intmax_t const);
-SI_export void si_bigint_twos_complement(si_bigint **const);
+SI_export void si_bigint_shl(si_bigint** const);
+SI_export void si_bigint_shr(si_bigint* const);
+SI_export void si_bigint_not(si_bigint* const);
+SI_export void si_bigint_and(si_bigint** const, si_bigint const* const);
+SI_export void si_bigint_and_num(si_bigint* const, ptrdiff_t const);
+SI_export void si_bigint_or(si_bigint** const, si_bigint const* const);
+SI_export void si_bigint_or_num(si_bigint* const, ptrdiff_t const);
+SI_export void si_bigint_xor(si_bigint** const, si_bigint const* const);
+SI_export void si_bigint_xor_num(si_bigint* const, ptrdiff_t const);
+SI_export void si_bigint_twos_complement(si_bigint** const);
 
-SI_export bool si_bigint_eq(si_bigint const*const restrict, si_bigint const*const restrict);
-SI_export bool si_bigint_eq_num(si_bigint const*const, intmax_t const);
-SI_export bool si_bigint_lt(si_bigint const*const, si_bigint const*const);
-SI_export bool si_bigint_lt_num(si_bigint const*const, intmax_t const);
-SI_export bool si_bigint_gt(si_bigint const*const, si_bigint const*const);
-SI_export bool si_bigint_gt_num(si_bigint const*const, intmax_t const);
+SI_export bool si_bigint_eq(si_bigint const* const restrict, si_bigint const* const restrict);
+SI_export bool si_bigint_eq_num(si_bigint const* const, ptrdiff_t const);
+SI_export bool si_bigint_lt(si_bigint const* const, si_bigint const* const);
+SI_export bool si_bigint_lt_num(si_bigint const* const, ptrdiff_t const);
+SI_export bool si_bigint_gt(si_bigint const* const, si_bigint const* const);
+SI_export bool si_bigint_gt_num(si_bigint const* const, ptrdiff_t const);
 
 #ifdef __cplusplus
 }

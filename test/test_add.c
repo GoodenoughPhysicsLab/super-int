@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "common.h"
 #include "si_bigint.h"
 
